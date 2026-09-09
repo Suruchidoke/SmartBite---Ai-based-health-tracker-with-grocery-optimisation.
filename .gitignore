@@ -1,30 +1,33 @@
-# Environments
+# Python virtual environment
 venv/
 env/
 ENV/
-.env
+.venv/
 
-# Python Bytecode & Cache
+# Python bytecode & cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.pytest_cache/
 
-# Distribution / Packaging
-build/
-dist/
-*.egg-info/
-
-# Databases & local stores
+# Databases & local state
 *.db
 *.sqlite3
+smartbite.db
 
-# IDE & Editor files
+# Scratch & development logs
+scratch/
+*.log
+
+# Environment variables & secrets
+.env
+.env.*
+instance/
+
+# IDE & OS files
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# OS Generated
+.qodo/
 .DS_Store
 Thumbs.db
