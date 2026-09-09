@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Streak Master - SmartBite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      --color-sage-green: #8FBC8F;
+      --color-beige: #F5F5DC;
+      --color-off-white: #FCFCF4;
+      --color-dark-grey: #36454F;
+      --color-darker-sage-green: #7B9F7B;
+      --color-dark-beige: #E0D8C4;
+    }
+    .bg-sage-green { background-color: var(--color-sage-green); }
+    .bg-beige { background-color: var(--color-beige); }
+    .bg-off-white { background-color: var(--color-off-white); }
+    .text-dark-grey { color: var(--color-dark-grey); }
+    .text-sage-green { color: var(--color-sage-green); }
+    .border-sage-green { border-color: var(--color-sage-green); }
+
+    .streak-card {
+      background-color: var(--color-off-white);
+      border-radius: 1.25rem;
+      box-shadow: 0 4px 12px rgba(54, 69, 79, 0.08);
+      padding: 1.5rem;
+      transition: all 0.25s ease;
+    }
+    .streak-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(54, 69, 79, 0.12);
+    }
+    .day-circle.active {
+      background-color: var(--color-sage-green);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(143, 188, 143, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-beige text-dark-grey min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-off-white shadow-sm py-4 sticky top-0 z-40">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <a href="{{ url_for('dashboard') }}" class="text-sage-green hover:text-dark-grey transition-colors flex items-center">
+          <i class="fas fa-arrow-left text-lg mr-2"></i>
+          <span class="font-medium">Dashboard</span>
+        </a>
+      </div>
+      <h1 class="text-xl font-bold text-dark-grey flex items-center">
+        <span class="mr-2 text-2xl">🔥</span> Streak Master
+      </h1>
+      <div>
+        <a href="{{ url_for('achievements') }}" class="text-xs bg-sage-green text-white px-3 py-1.5 rounded-full font-semibold hover:opacity-90">
+          Achievements
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Streak Hero Banner -->
+    <div class="streak-card text-center mb-8 border border-green-100 bg-gradient-to-b from-white to-off-white">
+      <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-amber-100 text-amber-500 text-5xl mb-4 shadow-inner">
+        🔥
+      </div>
+      <h2 class="text-4xl font-extrabold text-dark-grey mb-1">
+        <span id="streakCount">7</span> Days Streak!
+      </h2>
+      <p class="text-gray-600 text-sm max-w-md mx-auto">
+        Consistency builds transformation. Complete today's healthy habits to keep your streak alive!
+      </p>
+
+      <!-- Weekly Progress -->
+      <div class="mt-6 flex justify-center items-center space-x-3 sm:space-x-4">
+        <div class="flex flex-col items-center">
+          <span class="text-xs text-gray-500 mb-1">Mon</span>
+          <div class="day-circle active w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-xs text-gray-500 mb-1">Tue</span>
+          <div class="day-circle active w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-xs text-gray-500 mb-1">Wed</span>
+          <div class="day-circle active w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-xs text-gray-500 mb-1">Thu</span>
+          <div class="day-circle active w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-xs text-gray-500 mb-1">Fri</span>
+          <div class="day-circle active w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-xs text-gray-500 mb-1">Sat</span>
+          <div class="day-circle active w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">✓</div>
+        </div>
+        <div class="flex flex-col items-center">
+          <span class="text-xs text-gray-500 mb-1">Today</span>
+          <div id="todayCircle" class="day-circle active w-10 h-10 rounded-full border-2 border-sage-green flex items-center justify-center font-bold text-sm">✓</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Daily Habit Checklist -->
+    <div class="streak-card mb-8">
+      <h3 class="text-lg font-bold text-dark-grey mb-4 flex items-center">
+        <i class="fas fa-check-double text-sage-green mr-2"></i> Today's Healthy Habits
+      </h3>
+      <div class="space-y-3" id="habitList">
+        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer">
+          <div class="flex items-center space-x-3">
+            <input type="checkbox" checked class="w-5 h-5 text-sage-green rounded focus:ring-sage-green">
+            <span class="font-medium text-dark-grey">Log Balanced Diet Meals</span>
+          </div>
+          <span class="text-xs text-green-700 bg-green-50 px-2.5 py-1 rounded-full font-medium">Done</span>
+        </label>
+        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer">
+          <div class="flex items-center space-x-3">
+            <input type="checkbox" checked class="w-5 h-5 text-sage-green rounded focus:ring-sage-green">
+            <span class="font-medium text-dark-grey">Drink 2.5L Water (Hydration Goal)</span>
+          </div>
+          <span class="text-xs text-green-700 bg-green-50 px-2.5 py-1 rounded-full font-medium">Done</span>
+        </label>
+        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer">
+          <div class="flex items-center space-x-3">
+            <input type="checkbox" checked class="w-5 h-5 text-sage-green rounded focus:ring-sage-green">
+            <span class="font-medium text-dark-grey">Daily 30-min Workout or Walk</span>
+          </div>
+          <span class="text-xs text-green-700 bg-green-50 px-2.5 py-1 rounded-full font-medium">Done</span>
+        </label>
+        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer">
+          <div class="flex items-center space-x-3">
+            <input type="checkbox" checked class="w-5 h-5 text-sage-green rounded focus:ring-sage-green">
+            <span class="font-medium text-dark-grey">7+ Hours Quality Sleep</span>
+          </div>
+          <span class="text-xs text-green-700 bg-green-50 px-2.5 py-1 rounded-full font-medium">Done</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Quick Navigation to Fitness Games -->
+    <div class="flex justify-center space-x-4">
+      <a href="{{ url_for('fitness_games') }}" class="bg-sage-green text-white px-6 py-3 rounded-full font-semibold hover:opacity-90 transition shadow">
+        <i class="fas fa-gamepad mr-2"></i> Play Fitness Games
+      </a>
+      <a href="{{ url_for('dashboard') }}" class="border border-sage-green text-sage-green px-6 py-3 rounded-full font-semibold hover:bg-sage-green hover:text-white transition shadow">
+        Return to Dashboard
+      </a>
+    </div>
+  </main>
+
+  <footer class="bg-dark-grey text-off-white py-4 text-center text-xs">
+    <p>&copy; 2026 SmartBite. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

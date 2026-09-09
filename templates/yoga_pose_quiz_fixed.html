@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yoga Pose Quiz - SmartBite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5DC;
+            color: #36454F;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+        }
+        h1 {
+            color: #8FBC8F;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .quiz-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 2px solid #8FBC8F;
+            border-radius: 0.5rem;
+            background-color: #FCFCF4;
+        }
+        .options {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .option {
+            cursor: pointer;
+            border: 2px solid #8FBC8F;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            flex: 1 1 45%;
+            text-align: center;
+            background-color: #E8F5E8;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #7B9F7B;
+            color: white;
+        }
+        .option img {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        .quiz-image {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        .result {
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+        button {
+            background-color: #8FBC8F;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Yoga Pose Quiz</h1>
+
+    <!-- Pose Identification -->
+    <div class="quiz-section" id="pose-identification">
+        <h2>Pose Identification</h2>
+        <p>Look at the pose image and pick the correct name.</p>
+        <img id="pose-image" src="" alt="Yoga Pose" style="max-width:300px; margin-bottom:1rem;" />
+        <div class="options" id="pose-name-options"></div>
+        <div class="result" id="pose-identification-result"></div>
+        <button id="pose-identification-next" disabled>Next</button>
+    </div>
+
+    <!-- Name to Pose Match -->
+    <div class="quiz-section" id="name-to-pose-match">
+        <h2>Name to Pose Match</h2>
+        <p>Pick the correct pose image for the given name.</p>
+        <h3 id="pose-name"></h3>
+        <div class="options" id="pose-image-options"></div>
+        <div class="result" id="name-to-pose-result"></div>
+        <button id="name-to-pose-next" disabled>Next</button>
+    </div>
+
+    <!-- True or False -->
+    <div class="quiz-section" id="true-false-quiz">
+        <h2>True or False</h2>
+        <p>Is the label correct for the pose image?</p>
+        <img id="tf-pose-image" src="" alt="Yoga Pose" style="max-width:300px; margin-bottom:1rem;" />
+        <h3 id="tf-pose-label"></h3>
+        <div class="options" id="tf-options">
+            <div class="option" data-value="true">True</div>
+            <div class="option" data-value="false">False</div>
+        </div>
+        <div class="result" id="tf-result"></div>
+        <button id="tf-next" disabled>Next</button>
+    </div>
+
+    <!-- Level Challenge -->
+    <div class="quiz-section" id="level-challenge">
+        <h2>Level Challenge</h2>
+        <p>Match the yoga pose to its difficulty level.</p>
+        <div class="options" id="level-options"></div>
+        <div class="result" id="level-result"></div>
+        <button id="level-next" disabled>Next</button>
+    </div>
+
+    <!-- Benefits Quiz -->
+    <div class="quiz-section" id="benefits-quiz">
+        <h2>Benefits Quiz</h2>
+        <p>What is the main benefit of this pose?</p>
+        <img id="benefits-pose-image" src="" alt="Yoga Pose" class="quiz-image" />
+        <div class="options" id="benefits-options"></div>
+        <div class="result" id="benefits-result"></div>
+        <button id="benefits-next" disabled>Next</button>
+    </div>
+
+    <!-- Body Parts Quiz -->
+    <div class="quiz-section" id="body-parts-quiz">
+        <h2>Body Parts Quiz</h2>
+        <p>Which body parts are primarily involved in this pose?</p>
+        <img id="body-parts-pose-image" src="" alt="Yoga Pose" class="quiz-image" />
+        <div class="options" id="body-parts-options"></div>
+        <div class="result" id="body-parts-result"></div>
+        <button id="body-parts-next" disabled>Next</button>
+    </div>
+
+    <div id="final-score" style="font-weight: 700; font-size: 1.2rem; margin-top: 2rem;"></div>
+
+    <a href="{{ url_for('fitness_games') }}" class="text-sage-green hover:underline">Back to Fitness Games</a>
+
+    <script>
+        // Data for poses with local images
+        const poses = [
+            { name: "Tree Pose", img: "{{ url_for('static', filename='images/images/tree_pose.jpg') }}", level: "Easy", benefits: "Improves balance and focus", bodyParts: "Legs, core" },
+            { name: "Cat-Cow Pose", img: "{{ url_for('static', filename='images/images/cat_cow_pose.webp') }}", level: "Easy", benefits: "Improves spinal flexibility", bodyParts: "Spine, neck" },
+            { name: "Crow Pose", img: "{{ url_for('static', filename='images/images/crow_pose.jpeg') }}", level: "Hard", benefits: "Strengthens arms and core", bodyParts: "Arms, wrists, core" },
+            { name: "Cobra Pose", img: "{{ url_for('static', filename='images/images/cobra-pose.jpg') }}", level: "Medium", benefits: "Strengthens back and opens chest", bodyParts: "Back, chest, arms" },
+            { name: "Child's Pose", img: "{{ url_for('static', filename='images/images/childs pose.jpg') }}", level: "Easy", benefits: "Relaxes the body and mind", bodyParts: "Back, hips, shoulders" },
+            { name: "Plank Pose", img: "{{ url_for('static', filename='images/images/plank_pose.jpeg') }}", level: "Medium", benefits: "Strengthens core and improves posture", bodyParts: "Core, arms, shoulders" },
+            { name: "Triangle Pose", img: "{{ url_for('static', filename='images/images/triangle_pose.jpg') }}", level: "Medium", benefits: "Improves flexibility and strength", bodyParts: "Legs, hips, spine" },
+            { name: "Wheel Pose", img: "{{ url_for('static', filename='images/images/wheel_pose.jpg') }}", level: "Hard", benefits: "Increases flexibility and strength", bodyParts: "Back, arms, legs" }
+        ];
+
+        let score = 0;
+
+        // Pose Identification Quiz
+        const poseIdentification = {
+            currentIndex: 0,
+            correctAnswer: null,
+            init() {
+                this.loadQuestion();
+                document.getElementById('pose-identification-next').addEventListener('click', () => {
+                    this.currentIndex++;
+                    if (this.currentIndex < poses.length) {
+                        this.loadQuestion();
+                    } else {
+                        document.getElementById('pose-identification').style.display = 'none';
+                        checkAllComplete();
+                    }
+                    this.disableNext();
+                });
+            },
+            loadQuestion() {
+                const pose = poses[this.currentIndex];
+                document.getElementById('pose-image').src = pose.img;
+                const optionsDiv = document.getElementById('pose-name-options');
+                optionsDiv.innerHTML = '';
+                const options = this.generateOptions(pose.name);
+                this.correctAnswer = pose.name;
+                options.forEach(name => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    div.textContent = name;
+                    div.addEventListener('click', () => this.checkAnswer(div));
+                    optionsDiv.appendChild(div);
+                });
+                document.getElementById('pose-identification-result').textContent = '';
+            },
+            generateOptions(correctName) {
+                const names = poses.map(p => p.name).filter(n => n !== correctName);
+                const shuffled = names.sort(() => 0.5 - Math.random());
+                const options = shuffled.slice(0, 3);
+                options.push(correctName);
+                return options.sort(() => 0.5 - Math.random());
+            },
+            checkAnswer(selectedDiv) {
+                if (selectedDiv.textContent === this.correctAnswer) {
+                    document.getElementById('pose-identification-result').textContent = 'Correct! +10 points';
+                    score += 10;
+                } else {
+                    document.getElementById('pose-identification-result').textContent = `Wrong! Correct answer: ${this.correctAnswer}`;
+                }
+                this.disableOptions();
+                this.enableNext();
+            },
+            disableOptions() {
+                const options = document.querySelectorAll('#pose-name-options .option');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+            },
+            enableNext() {
+                document.getElementById('pose-identification-next').disabled = false;
+            },
+            disableNext() {
+                document.getElementById('pose-identification-next').disabled = true;
+            }
+        };
+
+        // Name to Pose Match Quiz
+        const nameToPoseMatch = {
+            currentIndex: 0,
+            correctAnswer: null,
+            init() {
+                this.loadQuestion();
+                document.getElementById('name-to-pose-next').addEventListener('click', () => {
+                    this.currentIndex++;
+                    if (this.currentIndex < poses.length) {
+                        this.loadQuestion();
+                    } else {
+                        document.getElementById('name-to-pose-match').style.display = 'none';
+                        checkAllComplete();
+                    }
+                    this.disableNext();
+                });
+            },
+            loadQuestion() {
+                const pose = poses[this.currentIndex];
+                document.getElementById('pose-name').textContent = pose.name;
+                const optionsDiv = document.getElementById('pose-image-options');
+                optionsDiv.innerHTML = '';
+                const options = this.generateOptions(pose.img);
+                this.correctAnswer = pose.img;
+                options.forEach(imgSrc => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    const img = document.createElement('img');
+                    img.src = imgSrc;
+                    img.alt = 'Yoga Pose';
+                    div.appendChild(img);
+                    div.addEventListener('click', () => this.checkAnswer(div));
+                    optionsDiv.appendChild(div);
+                });
+                document.getElementById('name-to-pose-result').textContent = '';
+            },
+            generateOptions(correctImg) {
+                const imgs = poses.map(p => p.img).filter(i => i !== correctImg);
+                const shuffled = imgs.sort(() => 0.5 - Math.random());
+                const options = shuffled.slice(0, 3);
+                options.push(correctImg);
+                return options.sort(() => 0.5 - Math.random());
+            },
+            checkAnswer(selectedDiv) {
+                const img = selectedDiv.querySelector('img').src;
+                if (img === this.correctAnswer) {
+                    document.getElementById('name-to-pose-result').textContent = 'Correct! +10 points';
+                    score += 10;
+                } else {
+                    document.getElementById('name-to-pose-result').textContent = 'Wrong! Try again.';
+                }
+                this.disableOptions();
+                this.enableNext();
+            },
+            disableOptions() {
+                const options = document.querySelectorAll('#pose-image-options .option');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+            },
+            enableNext() {
+                document.getElementById('name-to-pose-next').disabled = false;
+            },
+            disableNext() {
+                document.getElementById('name-to-pose-next').disabled = true;
+            }
+        };
+
+        // True or False Quiz
+        const trueFalseQuiz = {
+            currentIndex: 0,
+            correctAnswer: null,
+            init() {
+                this.loadQuestion();
+                document.getElementById('tf-next').addEventListener('click', () => {
+                    this.currentIndex++;
+                    if (this.currentIndex < poses.length) {
+                        this.loadQuestion();
+                    } else {
+                        document.getElementById('true-false-quiz').style.display = 'none';
+                        checkAllComplete();
+                    }
+                    this.disableNext();
+                });
+                const options = document.querySelectorAll('#tf-options .option');
+                options.forEach(opt => {
+                    opt.addEventListener('click', () => this.checkAnswer(opt));
+                });
+            },
+            loadQuestion() {
+                const pose = poses[this.currentIndex];
+                document.getElementById('tf-pose-image').src = pose.img;
+                document.getElementById('tf-pose-label').textContent = `This is the ${pose.name}`;
+                this.correctAnswer = true; // always true for simplicity
+                document.getElementById('tf-result').textContent = '';
+            },
+            checkAnswer(selectedDiv) {
+                const val = selectedDiv.dataset.value === 'true';
+                if (val === this.correctAnswer) {
+                    document.getElementById('tf-result').textContent = 'Correct! +10 points';
+                    score += 10;
+                } else {
+                    document.getElementById('tf-result').textContent = 'Wrong! Try again.';
+                }
+                this.disableOptions();
+                this.enableNext();
+            },
+            disableOptions() {
+                const options = document.querySelectorAll('#tf-options .option');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+            },
+            enableNext() {
+                document.getElementById('tf-next').disabled = false;
+            },
+            disableNext() {
+                document.getElementById('tf-next').disabled = true;
+            }
+        };
+
+        // Level Challenge Quiz
+        const levelChallenge = {
+            currentIndex: 0,
+            correctAnswer: null,
+            init() {
+                this.loadQuestion();
+                document.getElementById('level-next').addEventListener('click', () => {
+                    this.currentIndex++;
+                    if (this.currentIndex < poses.length) {
+                        this.loadQuestion();
+                    } else {
+                        document.getElementById('level-challenge').style.display = 'none';
+                        checkAllComplete();
+                    }
+                    this.disableNext();
+                });
+            },
+            loadQuestion() {
+                const pose = poses[this.currentIndex];
+                const optionsDiv = document.getElementById('level-options');
+                optionsDiv.innerHTML = '';
+                const levels = ["Easy", "Medium", "Hard"];
+                this.correctAnswer = pose.level;
+                levels.forEach(level => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    div.textContent = level;
+                    div.addEventListener('click', () => this.checkAnswer(div));
+                    optionsDiv.appendChild(div);
+                });
+                document.getElementById('level-result').textContent = '';
+            },
+            checkAnswer(selectedDiv) {
+                if (selectedDiv.textContent === this.correctAnswer) {
+                    document.getElementById('level-result').textContent = 'Correct! +10 points';
+                    score += 10;
+                } else {
+                    document.getElementById('level-result').textContent = `Wrong! Correct level: ${this.correctAnswer}`;
+                }
+                this.disableOptions();
+                this.enableNext();
+            },
+            disableOptions() {
+                const options = document.querySelectorAll('#level-options .option');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+            },
+            enableNext() {
+                document.getElementById('level-next').disabled = false;
+            },
+            disableNext() {
+                document.getElementById('level-next').disabled = true;
+            }
+        };
+
+        // Benefits Quiz
+        const benefitsQuiz = {
+            currentIndex: 0,
+            correctAnswer: null,
+            init() {
+                this.loadQuestion();
+                document.getElementById('benefits-next').addEventListener('click', () => {
+                    this.currentIndex++;
+                    if (this.currentIndex < poses.length) {
+                        this.loadQuestion();
+                    } else {
+                        document.getElementById('benefits-quiz').style.display = 'none';
+                        checkAllComplete();
+                    }
+                    this.disableNext();
+                });
+            },
+            loadQuestion() {
+                const pose = poses[this.currentIndex];
+                document.getElementById('benefits-pose-image').src = pose.img;
+                const optionsDiv = document.getElementById('benefits-options');
+                optionsDiv.innerHTML = '';
+                const options = this.generateOptions(pose.benefits);
+                this.correctAnswer = pose.benefits;
+                options.forEach(benefit => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    div.textContent = benefit;
+                    div.addEventListener('click', () => this.checkAnswer(div));
+                    optionsDiv.appendChild(div);
+                });
+                document.getElementById('benefits-result').textContent = '';
+            },
+            generateOptions(correctBenefit) {
+                const benefits = poses.map(p => p.benefits).filter(b => b !== correctBenefit);
+                const shuffled = benefits.sort(() => 0.5 - Math.random());
+                const options = shuffled.slice(0, 3);
+                options.push(correctBenefit);
+                return options.sort(() => 0.5 - Math.random());
+            },
+            checkAnswer(selectedDiv) {
+                if (selectedDiv.textContent === this.correctAnswer) {
+                    document.getElementById('benefits-result').textContent = 'Correct! +10 points';
+                    score += 10;
+                } else {
+                    document.getElementById('benefits-result').textContent = `Wrong! Correct answer: ${this.correctAnswer}`;
+                }
+                this.disableOptions();
+                this.enableNext();
+            },
+            disableOptions() {
+                const options = document.querySelectorAll('#benefits-options .option');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+            },
+            enableNext() {
+                document.getElementById('benefits-next').disabled = false;
+            },
+            disableNext() {
+                document.getElementById('benefits-next').disabled = true;
+            }
+        };
+
+        // Body Parts Quiz
+        const bodyPartsQuiz = {
+            currentIndex: 0,
+            correctAnswer: null,
+            init() {
+                this.loadQuestion();
+                document.getElementById('body-parts-next').addEventListener('click', () => {
+                    this.currentIndex++;
+                    if (this.currentIndex < poses.length) {
+                        this.loadQuestion();
+                    } else {
+                        document.getElementById('body-parts-quiz').style.display = 'none';
+                        checkAllComplete();
+                    }
+                    this.disableNext();
+                });
+            },
+            loadQuestion() {
+                const pose = poses[this.currentIndex];
+                document.getElementById('body-parts-pose-image').src = pose.img;
+                const optionsDiv = document.getElementById('body-parts-options');
+                optionsDiv.innerHTML = '';
+                const options = this.generateOptions(pose.bodyParts);
+                this.correctAnswer = pose.bodyParts;
+                options.forEach(bodyPart => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    div.textContent = bodyPart;
+                    div.addEventListener('click', () => this.checkAnswer(div));
+                    optionsDiv.appendChild(div);
+                });
+                document.getElementById('body-parts-result').textContent = '';
+            },
+            generateOptions(correctBodyParts) {
+                const bodyParts = poses.map(p => p.bodyParts).filter(bp => bp !== correctBodyParts);
+                const shuffled = bodyParts.sort(() => 0.5 - Math.random());
+                const options = shuffled.slice(0, 3);
+                options.push(correctBodyParts);
+                return options.sort(() => 0.5 - Math.random());
+            },
+            checkAnswer(selectedDiv) {
+                if (selectedDiv.textContent === this.correctAnswer) {
+                    document.getElementById('body-parts-result').textContent = 'Correct! +10 points';
+                    score += 10;
+                } else {
+                    document.getElementById('body-parts-result').textContent = `Wrong! Correct answer: ${this.correctAnswer}`;
+                }
+                this.disableOptions();
+                this.enableNext();
+            },
+            disableOptions() {
+                const options = document.querySelectorAll('#body-parts-options .option');
+                options.forEach(opt => opt.style.pointerEvents = 'none');
+            },
+            enableNext() {
+                document.getElementById('body-parts-next').disabled = false;
+            },
+            disableNext() {
+                document.getElementById('body-parts-next').disabled = true;
+            }
+        };
+
+        // Check if all quizzes are complete and show final score
+        function checkAllComplete() {
+            const sections = ['pose-identification', 'name-to-pose-match', 'true-false-quiz', 'level-challenge', 'benefits-quiz', 'body-parts-quiz'];
+            const allHidden = sections.every(id => document.getElementById(id).style.display === 'none');
+            if (allHidden) {
+                document.getElementById('final-score').textContent = `Quiz complete! Your total score: ${score}`;
+
+                // Save quiz score to backend
+                saveQuizScore(score);
+            }
+        }
+
+        // Save quiz score to backend
+        async function saveQuizScore(quizScore) {
+            try {
+                const response = await fetch('/api/quiz/save-score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        quiz_type: 'yoga_pose',
+                        score: quizScore,
+                        max_score: 480, // 8 poses * 6 questions * 10 points each
+                        user_id: getCurrentUserId()
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Quiz score saved successfully:', result);
+                } else {
+                    console.error('Failed to save quiz score');
+                }
+            } catch (error) {
+                console.error('Error saving quiz score:', error);
+            }
+        }
+
+        // Get current user ID (you may need to adjust this based on your authentication system)
+        function getCurrentUserId() {
+            // Try to get user ID from session or local storage
+            return sessionStorage.getItem('user_id') || 'anonymous';
+        }
+
+        // Initialize all quizzes
+        poseIdentification.init();
+        nameToPoseMatch.init();
+        trueFalseQuiz.init();
+        levelChallenge.init();
+        benefitsQuiz.init();
+        bodyPartsQuiz.init();
+    </script>
+</body>
+</html>

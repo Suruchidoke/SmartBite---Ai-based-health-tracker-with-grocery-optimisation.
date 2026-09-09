@@ -1,0 +1,849 @@
+{% extends "base.html" %}
+
+{% block title %}AI Health & Grocery Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .metric-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(74, 124, 89, 0.15);
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 15px -2px rgba(34, 51, 42, 0.05);
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px -4px rgba(74, 124, 89, 0.12);
+        border-color: rgba(74, 124, 89, 0.3);
+    }
+    .cuisine-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+    .cuisine-badge-indian { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+    .cuisine-badge-asian { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .cuisine-badge-mediterranean { background: #E0E7FF; color: #3730A3; border: 1px solid #A5B4FC; }
+    .cuisine-badge-mexican { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
+    .cuisine-badge-continental { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+    .progress-ring-circle {
+        stroke-dasharray: 283;
+        stroke-dashoffset: 283;
+        transition: stroke-dashoffset 0.8s ease-in-out;
+    }
+    .meal-card {
+        background: #FFFFFF;
+        border: 1px solid #E5E7EB;
+        border-radius: 1rem;
+        transition: all 0.2s ease;
+    }
+    .meal-card:hover {
+        border-color: #4A7C59;
+        box-shadow: 0 4px 12px rgba(74, 124, 89, 0.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+    <!-- Hero Welcome Banner -->
+    <div class="metric-card p-6 sm:p-8 bg-gradient-to-r from-emerald-900/5 via-white to-green-900/5 relative overflow-hidden">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
+            <div>
+                <div class="flex items-center space-x-2 text-xs font-bold text-sage uppercase tracking-wider mb-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>AI Health & Grocery Engine Online</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-darkslate tracking-tight">
+                    Welcome back, <span class="text-sage">{{ user_doc.name or user.split('@')[0] }}</span>! 🌿
+                </h1>
+                <p class="text-sm text-gray-600 mt-1.5 max-w-2xl">
+                    Your closed-loop nutrition and grocery hub. Track daily calories, manage your multi-cuisine meal plans, and keep your shopping list synchronized with zero food waste.
+                </p>
+
+                <!-- Active Preferences Tags -->
+                <div class="flex flex-wrap items-center gap-2 mt-4">
+                    <span class="text-xs text-gray-500 font-medium mr-1">Active Cuisines:</span>
+                    {% set active_cuisines = user_doc.cuisines or ['Indian', 'Asian', 'Mediterranean'] %}
+                    {% for c in active_cuisines %}
+                        {% if c == 'Indian' %}
+                            <span class="cuisine-badge cuisine-badge-indian">🍛 Indian</span>
+                        {% elif c == 'Asian' %}
+                            <span class="cuisine-badge cuisine-badge-asian">🥢 Pan-Asian</span>
+                        {% elif c == 'Mediterranean' %}
+                            <span class="cuisine-badge cuisine-badge-mediterranean">🥗 Mediterranean</span>
+                        {% elif c == 'Mexican' %}
+                            <span class="cuisine-badge cuisine-badge-mexican">🌮 Mexican</span>
+                        {% elif c == 'Continental' %}
+                            <span class="cuisine-badge cuisine-badge-continental">🥪 Continental</span>
+                        {% else %}
+                            <span class="cuisine-badge bg-gray-100 text-gray-700">{{ c }}</span>
+                        {% endif %}
+                    {% endfor %}
+
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 ml-2">
+                        🎯 {{ (user_doc.goal or 'maintenance')|replace('_', ' ')|title }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Fast Action CTAs -->
+            <div class="flex flex-wrap sm:flex-nowrap gap-3 items-center">
+                <a href="{{ url_for('diet_plan') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-sage text-white shadow hover:bg-sage-dark transition duration-200">
+                    <i class="fas fa-utensils mr-2"></i> View Diet Plan
+                </a>
+                <a href="{{ url_for('grocery') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-sage border border-sage/30 shadow-sm hover:bg-sage-50 transition duration-200">
+                    <i class="fas fa-shopping-basket mr-2"></i> Grocery Optimizer
+                </a>
+                <a href="{{ url_for('profile') }}" class="p-2.5 rounded-xl text-gray-500 hover:text-sage hover:bg-white transition border border-transparent hover:border-gray-200" title="Edit Biometrics & Cuisines">
+                    <i class="fas fa-cog text-base"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4 Core Metric Stat Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- Card 1: Daily Calorie Tracker -->
+        <div class="metric-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Daily Calorie Target</span>
+                    <span id="calorie-percent-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        0%
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="flex items-baseline space-x-1">
+                            <span id="calorie-count" class="text-3xl font-black text-darkslate">{{ health.calories or 0 }}</span>
+                            <span class="text-sm font-semibold text-gray-400">/ <span id="calorie-goal">{{ user_doc.target_calories or health.targetCalories or 2000 }}</span> kcal</span>
+                        </div>
+                        <p id="remaining-cals-text" class="text-xs text-gray-500 mt-1">
+                            <strong id="remaining-cals">{{ (user_doc.target_calories or health.targetCalories or 2000) - (health.calories or 0) }}</strong> kcal remaining today
+                        </p>
+                    </div>
+
+                    <!-- SVG Circular Progress Ring -->
+                    <div class="relative w-16 h-16 flex-shrink-0">
+                        <svg class="w-full h-full progress-ring" viewBox="0 0 100 100">
+                            <circle class="text-gray-200" stroke-width="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                            <circle id="calorie-ring-circle" class="text-sage progress-ring-circle" stroke-width="10" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-sage" id="ring-pct-text">
+                            0%
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Linear fallback progress bar -->
+                <div class="w-full bg-gray-100 rounded-full h-2 mt-4 overflow-hidden">
+                    <div id="calorie-bar" class="bg-sage h-2 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Quick Calorie Logging Controls -->
+            <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-1 text-xs">
+                <span class="text-gray-400 font-medium">Quick Log:</span>
+                <button onclick="quickLogCalories(250, 'Healthy Snack')" class="px-2 py-1 rounded bg-sage-50 text-sage hover:bg-sage-100 font-semibold transition">+250</button>
+                <button onclick="quickLogCalories(500, 'Regular Meal')" class="px-2 py-1 rounded bg-sage-50 text-sage hover:bg-sage-100 font-semibold transition">+500</button>
+                <button onclick="openCustomCalorieModal()" class="px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition" title="Log custom calories">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button onclick="resetDayCalories()" class="text-gray-400 hover:text-red-500 transition ml-1" title="Reset Today's Calories">
+                    <i class="fas fa-undo-alt text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Card 2: Macronutrient Breakdown -->
+        <div class="metric-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Target Macros</span>
+                    <span class="text-xs font-medium text-sage">Mifflin-St Jeor</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="w-20 h-20 relative flex-shrink-0">
+                        <canvas id="macro-pie-chart" class="w-full h-full"></canvas>
+                    </div>
+                    <div class="space-y-1.5 flex-grow text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+                                <span class="text-gray-600">Carbs</span>
+                            </span>
+                            <span class="font-bold text-darkslate"><span id="carbs-val">{{ user_doc.carbs_target or 225 }}</span>g <span class="text-gray-400 text-[10px]">(45%)</span></span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                <span class="text-gray-600">Protein</span>
+                            </span>
+                            <span class="font-bold text-darkslate"><span id="protein-val">{{ user_doc.protein_target or 115 }}</span>g <span class="text-gray-400 text-[10px]">(30%)</span></span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-teal-700"></span>
+                                <span class="text-gray-600">Fat</span>
+                            </span>
+                            <span class="font-bold text-darkslate"><span id="fat-val">{{ user_doc.fat_target or 55 }}</span>g <span class="text-gray-400 text-[10px]">(25%)</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <span>BMI: <strong class="text-darkslate">{{ health.bmi or '22.5' }}</strong></span>
+                <span>Weight: <strong class="text-darkslate">{{ user_doc.weight or 68 }} kg</strong></span>
+            </div>
+        </div>
+
+        <!-- Card 3: Smart Grocery Bridge -->
+        <div class="metric-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Grocery Bridge</span>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                        Zero Food Waste
+                    </span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-sm">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-darkslate"><span id="shopping-count-badge">{{ grocery.shoppingList|length if grocery and grocery.shoppingList else 0 }}</span> To Buy</div>
+                                <div class="text-[11px] text-gray-500">From AI Meal Plan</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-emerald-700" id="cart-cost-est">~$35-50</span>
+                    </div>
+
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-sm">
+                                <i class="fas fa-box-open"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-darkslate"><span id="pantry-count-badge">{{ grocery.pantry|length if grocery and grocery.pantry else 0 }}</span> In Pantry</div>
+                                <div class="text-[11px] text-gray-500">Auto-deducted items</div>
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold text-amber-600">Owned</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-gray-100">
+                <a href="{{ url_for('grocery') }}" class="w-full flex items-center justify-center space-x-1.5 py-1.5 text-xs font-bold text-sage hover:text-sage-dark transition">
+                    <span>Manage Grocery Cart</span>
+                    <i class="fas fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Card 4: Daily Activity & Streak -->
+        <div class="metric-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Habit & Streak</span>
+                    <span class="text-xs font-bold text-amber-500 flex items-center space-x-1">
+                        <i class="fas fa-fire"></i>
+                        <span>Active</span>
+                    </span>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="text-xs font-semibold text-gray-500 mb-1.5">Recent Activity Log:</div>
+                    <ul id="activity-log-summary" class="space-y-1.5 text-xs h-20 overflow-y-auto pr-1">
+                        {% if activity %}
+                            {% for act in activity[-3:]|reverse %}
+                                <li class="text-gray-600 flex items-center space-x-1.5 truncate">
+                                    <i class="fas fa-check text-emerald-500 text-[10px]"></i>
+                                    <span class="truncate">{{ act.activity if act.activity is defined else act }}</span>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="text-gray-400 italic text-[11px]">No activity logged today yet.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Inline Quick Activity Input -->
+            <div class="mt-2 pt-2 border-t border-gray-100">
+                <form id="quick-activity-form" onsubmit="handleQuickActivity(event)" class="flex items-center space-x-1.5">
+                    <input type="text" id="quick-activity-input" placeholder="Log: 30m walk, yoga..." class="flex-grow px-2.5 py-1 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-sage" />
+                    <button type="submit" class="px-2.5 py-1 rounded-lg bg-sage text-white text-xs font-bold hover:bg-sage-dark transition">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Today's Multi-Cuisine Meal Plan Highlights -->
+    <div class="metric-card p-6 sm:p-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-xl font-bold text-darkslate">Today's Multi-Cuisine Meal Highlights</h2>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        Personalized AI Plan
+                    </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                    Carefully balanced recipes incorporating your preferred global cuisines.
+                </p>
+            </div>
+            <a href="{{ url_for('diet_plan') }}" class="inline-flex items-center text-xs font-bold text-sage hover:text-sage-dark transition">
+                <span>View Full 7-Day Plan & Ingredient Breakdown</span>
+                <i class="fas fa-arrow-right ml-1.5"></i>
+            </a>
+        </div>
+
+        <!-- 3 Meal Cards: Breakfast, Lunch, Dinner -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="today-meals-grid">
+            <!-- Breakfast -->
+            <div class="meal-card p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-600 flex items-center space-x-1">
+                            <i class="fas fa-sun"></i>
+                            <span>Breakfast</span>
+                        </span>
+                        <span class="cuisine-badge cuisine-badge-indian">🍛 Indian</span>
+                    </div>
+                    <h3 class="font-bold text-darkslate text-base line-clamp-1" id="breakfast-title">
+                        {% if today_meals and today_meals[0] %}{{ today_meals[0].name or today_meals[0].recipe }}{% else %}Masala Oats & Spiced Almond Milk{% endif %}
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">
+                        {% if today_meals and today_meals[0] and today_meals[0].instructions %}{{ today_meals[0].instructions }}{% else %}High-fiber oats cooked with cumin, turmeric, and topped with toasted almonds.{% endif %}
+                    </p>
+                    <div class="flex items-center gap-3 mt-3 text-xs text-gray-500">
+                        <span><i class="fas fa-fire text-amber-500 mr-1"></i> <strong class="text-darkslate" id="breakfast-cals">{% if today_meals and today_meals[0] %}{{ today_meals[0].calories or 380 }}{% else %}380{% endif %}</strong> kcal</span>
+                        <span><i class="fas fa-clock text-blue-500 mr-1"></i> 15 mins</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <button onclick="logMealFromCard('breakfast')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition flex items-center space-x-1">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Mark as Eaten</span>
+                    </button>
+                    <a href="{{ url_for('diet_plan') }}" class="text-xs text-gray-400 hover:text-sage transition">Details</a>
+                </div>
+            </div>
+
+            <!-- Lunch -->
+            <div class="meal-card p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center space-x-1">
+                            <i class="fas fa-cloud-sun"></i>
+                            <span>Lunch</span>
+                        </span>
+                        <span class="cuisine-badge cuisine-badge-asian">🥢 Pan-Asian</span>
+                    </div>
+                    <h3 class="font-bold text-darkslate text-base line-clamp-1" id="lunch-title">
+                        {% if today_meals and today_meals|length > 1 %}{{ today_meals[1].name or today_meals[1].recipe }}{% else %}Tofu Teriyaki Bowl with Brown Rice{% endif %}
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">
+                        {% if today_meals and today_meals|length > 1 and today_meals[1].instructions %}{{ today_meals[1].instructions }}{% else %}Crisp pan-seared tofu tossed in sesame ginger glaze with steamed edamame and broccoli.{% endif %}
+                    </p>
+                    <div class="flex items-center gap-3 mt-3 text-xs text-gray-500">
+                        <span><i class="fas fa-fire text-amber-500 mr-1"></i> <strong class="text-darkslate" id="lunch-cals">{% if today_meals and today_meals|length > 1 %}{{ today_meals[1].calories or 560 }}{% else %}560{% endif %}</strong> kcal</span>
+                        <span><i class="fas fa-clock text-blue-500 mr-1"></i> 25 mins</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <button onclick="logMealFromCard('lunch')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition flex items-center space-x-1">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Mark as Eaten</span>
+                    </button>
+                    <a href="{{ url_for('diet_plan') }}" class="text-xs text-gray-400 hover:text-sage transition">Details</a>
+                </div>
+            </div>
+
+            <!-- Dinner -->
+            <div class="meal-card p-5 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 flex items-center space-x-1">
+                            <i class="fas fa-moon"></i>
+                            <span>Dinner</span>
+                        </span>
+                        <span class="cuisine-badge cuisine-badge-mediterranean">🥗 Mediterranean</span>
+                    </div>
+                    <h3 class="font-bold text-darkslate text-base line-clamp-1" id="dinner-title">
+                        {% if today_meals and today_meals|length > 2 %}{{ today_meals[2].name or today_meals[2].recipe }}{% else %}Greek Lemon Herb Grilled Salmon{% endif %}
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">
+                        {% if today_meals and today_meals|length > 2 and today_meals[2].instructions %}{{ today_meals[2].instructions }}{% else %}Herb-crusted fillet with oregano, garlic, Kalamata olives, and fresh cucumber salad.{% endif %}
+                    </p>
+                    <div class="flex items-center gap-3 mt-3 text-xs text-gray-500">
+                        <span><i class="fas fa-fire text-amber-500 mr-1"></i> <strong class="text-darkslate" id="dinner-cals">{% if today_meals and today_meals|length > 2 %}{{ today_meals[2].calories or 620 }}{% else %}620{% endif %}</strong> kcal</span>
+                        <span><i class="fas fa-clock text-blue-500 mr-1"></i> 30 mins</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <button onclick="logMealFromCard('dinner')" class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-semibold hover:bg-emerald-100 transition flex items-center space-x-1">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Mark as Eaten</span>
+                    </button>
+                    <a href="{{ url_for('diet_plan') }}" class="text-xs text-gray-400 hover:text-sage transition">Details</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two-Column Hub: Quick Grocery Checklist & AI Recipe Inspiration -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Left Column: Quick Grocery Checklist Widget -->
+        <div class="metric-card p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-sm">
+                            <i class="fas fa-shopping-basket"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-darkslate">Quick Grocery Checklist</h2>
+                            <p class="text-xs text-gray-500">Check items to move them to your pantry</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('grocery') }}" class="text-xs font-bold text-sage hover:underline">Full Optimizer →</a>
+                </div>
+
+                <!-- Shopping List Quick View -->
+                <div class="bg-gray-50/70 border border-gray-200/70 rounded-xl p-3 h-52 overflow-y-auto mb-4">
+                    <ul id="dashboard-shopping-list" class="space-y-2">
+                        <!-- Populated by JS -->
+                        <li class="text-xs text-gray-400 italic py-6 text-center">Loading ingredients from your active meal plan...</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Add Ingredient Form -->
+            <form id="quick-add-item-form" onsubmit="handleQuickAddItem(event)" class="flex items-center space-x-2 pt-2 border-t border-gray-100">
+                <input type="text" id="quick-grocery-input" placeholder="Quick add grocery item (e.g. olive oil, spinach)..." class="flex-grow px-3 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sage" />
+                <button type="submit" class="px-4 py-2 bg-sage text-white text-xs font-bold rounded-xl hover:bg-sage-dark transition shadow-sm whitespace-nowrap">
+                    Add Item
+                </button>
+            </form>
+        </div>
+
+        <!-- Right Column: AI Recipe Generator & BiteBot Snippet -->
+        <div class="metric-card p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-lg bg-purple-100 text-purple-800 flex items-center justify-center text-sm">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-darkslate">AI Recipe Generator</h2>
+                            <p class="text-xs text-gray-500">Instant ideas tailored to your pantry & cuisines</p>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('bitebot') }}" class="text-xs font-bold text-purple-700 hover:underline">Chat with BiteBot →</a>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-500 mb-1">Cooking Skill:</label>
+                        <select id="skill-selector" class="w-full text-xs py-1.5 px-2.5 rounded-lg border border-gray-200 focus:ring-1 focus:ring-sage focus:outline-none">
+                            <option value="beginner">Beginner (15-20 min)</option>
+                            <option value="intermediate" selected>Intermediate (30 min)</option>
+                            <option value="advanced">Master Chef</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-gray-500 mb-1">Recipes to Suggest:</label>
+                        <select id="recipe-count-selector" class="w-full text-xs py-1.5 px-2.5 rounded-lg border border-gray-200 focus:ring-1 focus:ring-sage focus:outline-none">
+                            <option value="3" selected>3 Recipes</option>
+                            <option value="5">5 Recipes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Recommendations Container -->
+                <div id="recipe-recommendations-list" class="bg-gray-50/70 border border-gray-200/70 rounded-xl p-3 h-40 overflow-y-auto mb-4">
+                    <div id="no-recipes-placeholder" class="text-xs text-gray-400 italic py-6 text-center">
+                        Click "Generate Recipes" to get instant culinary suggestions based on your pantry!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trigger Button -->
+            <button id="generate-ai-recipes-btn" onclick="generateAiRecipes()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-800 to-sage text-white text-xs font-bold shadow hover:from-emerald-900 hover:to-sage-dark transition flex items-center justify-center space-x-2">
+                <i class="fas fa-sparkles"></i>
+                <span id="gen-recipe-btn-text">Generate Fresh AI Recipes</span>
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Custom Calorie Input Modal -->
+<div id="custom-cal-modal" class="fixed inset-0 bg-darkslate/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 border border-gray-100">
+        <h3 class="text-base font-bold text-darkslate mb-2">Log Custom Calorie Intake</h3>
+        <p class="text-xs text-gray-500 mb-4">Record calories consumed outside your regular meal plan.</p>
+        
+        <div class="space-y-3 mb-5">
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Meal / Item Name:</label>
+                <input type="text" id="custom-meal-name" placeholder="e.g. Protein Shake, Afternoon Coffee" class="w-full px-3 py-2 text-xs rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:outline-none" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">Calories (kcal):</label>
+                <input type="number" id="custom-meal-cals" placeholder="e.g. 350" min="10" max="3000" class="w-full px-3 py-2 text-xs rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:outline-none" />
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end space-x-2">
+            <button onclick="closeCustomCalorieModal()" class="px-3 py-2 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-100 transition">Cancel</button>
+            <button onclick="submitCustomCalories()" class="px-4 py-2 rounded-xl text-xs font-bold bg-sage text-white hover:bg-sage-dark transition">Save & Log</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.USER_ID = "{{ user_id }}";
+    let macroChartInstance = null;
+
+    // Initialize UI on load
+    document.addEventListener('DOMContentLoaded', () => {
+        initMacroChart();
+        fetchDashboardData();
+    });
+
+    // Fetch live dashboard data
+    async function fetchDashboardData() {
+        try {
+            const res = await fetch(`/api/dashboard/${encodeURIComponent(window.USER_ID)}`);
+            if (!res.ok) throw new Error("Dashboard fetch failed");
+            const data = await res.json();
+            updateDashboardView(data);
+        } catch (err) {
+            console.error("Dashboard fetch error:", err);
+        }
+    }
+
+    // Update all elements on screen
+    function updateDashboardView(data) {
+        if (!data) return;
+
+        const health = data.healthData || {};
+        const profile = data.userProfile || {};
+        const grocery = data.groceryData || {};
+        const activity = data.activityLog || [];
+
+        // Calorie Tracker
+        const consumed = health.calories || 0;
+        const goal = health.goal || profile.targetCalories || 2000;
+        document.getElementById('calorie-count').textContent = consumed;
+        document.getElementById('calorie-goal').textContent = goal;
+
+        const remaining = Math.max(0, goal - consumed);
+        document.getElementById('remaining-cals').textContent = remaining;
+
+        const pct = goal > 0 ? Math.min(100, Math.round((consumed / goal) * 100)) : 0;
+        document.getElementById('calorie-percent-badge').textContent = `${pct}%`;
+        document.getElementById('calorie-bar').style.width = `${pct}%`;
+        document.getElementById('ring-pct-text').textContent = `${pct}%`;
+
+        // Update Circular SVG stroke-dashoffset (circumference = 2 * PI * 45 = 282.74)
+        const circumference = 283;
+        const offset = circumference - (pct / 100) * circumference;
+        document.getElementById('calorie-ring-circle').style.strokeDashoffset = offset;
+
+        // Update Macros
+        if (health.macros) {
+            const c = health.macros.carbs || 225;
+            const p = health.macros.protein || 115;
+            const f = health.macros.fat || 55;
+            document.getElementById('carbs-val').textContent = c;
+            document.getElementById('protein-val').textContent = p;
+            document.getElementById('fat-val').textContent = f;
+            renderMacroChart(c, p, f);
+        }
+
+        // Update Grocery Counts
+        const shoppingList = grocery.shoppingList || [];
+        const pantryList = grocery.pantry || [];
+        document.getElementById('shopping-count-badge').textContent = shoppingList.length;
+        document.getElementById('pantry-count-badge').textContent = pantryList.length;
+
+        renderQuickShoppingList(shoppingList);
+        renderActivityLog(activity);
+    }
+
+    // Render Quick Shopping Checklist
+    function renderQuickShoppingList(items) {
+        const listEl = document.getElementById('dashboard-shopping-list');
+        listEl.innerHTML = '';
+
+        if (!items || items.length === 0) {
+            listEl.innerHTML = `
+                <li class="text-xs text-gray-400 italic py-6 text-center">
+                    Your shopping cart is currently empty. Visit the <a href="/diet_plan" class="text-sage font-bold underline">Diet Plan</a> and click "Push to Grocery" to auto-fill ingredients!
+                </li>
+            `;
+            return;
+        }
+
+        items.slice(0, 15).forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'flex items-center justify-between p-2 rounded-lg bg-white border border-gray-100 shadow-2xs hover:border-sage/40 transition text-xs';
+            li.innerHTML = `
+                <label class="flex items-center space-x-2.5 cursor-pointer flex-grow select-none">
+                    <input type="checkbox" onchange="markItemBought('${item.replace(/'/g, "\\'")}')" class="w-4 h-4 rounded border-gray-300 text-sage focus:ring-sage cursor-pointer" />
+                    <span class="text-darkslate font-medium">${item}</span>
+                </label>
+                <span class="text-[10px] text-gray-400">Needed</span>
+            `;
+            listEl.appendChild(li);
+        });
+    }
+
+    // Move item from shopping to pantry via API
+    async function markItemBought(itemName) {
+        try {
+            const res = await fetch(`/api/grocery/${encodeURIComponent(window.USER_ID)}/move`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item: itemName })
+            });
+            if (res.ok) {
+                fetchDashboardData();
+            }
+        } catch (e) {
+            console.error("Failed to move grocery item:", e);
+        }
+    }
+
+    // Quick Add Item to Shopping List
+    async function handleQuickAddItem(e) {
+        e.preventDefault();
+        const input = document.getElementById('quick-grocery-input');
+        const item = input.value.trim();
+        if (!item) return;
+
+        try {
+            const res = await fetch(`/api/grocery/${encodeURIComponent(window.USER_ID)}/shopping/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ item })
+            });
+            if (res.ok) {
+                input.value = '';
+                fetchDashboardData();
+            }
+        } catch (err) {
+            console.error("Error adding grocery item:", err);
+        }
+    }
+
+    // Render Activity Log
+    function renderActivityLog(activities) {
+        const logEl = document.getElementById('activity-log-summary');
+        logEl.innerHTML = '';
+        if (!activities || activities.length === 0) {
+            logEl.innerHTML = '<li class="text-gray-400 italic text-[11px]">No activity logged today yet.</li>';
+            return;
+        }
+
+        activities.slice(-3).reverse().forEach(act => {
+            const text = act.activity || act;
+            const li = document.createElement('li');
+            li.className = 'text-gray-600 flex items-center space-x-1.5 truncate';
+            li.innerHTML = `
+                <i class="fas fa-check text-emerald-500 text-[10px]"></i>
+                <span class="truncate">${text}</span>
+            `;
+            logEl.appendChild(li);
+        });
+    }
+
+    // Quick Activity Logger
+    async function handleQuickActivity(e) {
+        e.preventDefault();
+        const input = document.getElementById('quick-activity-input');
+        const act = input.value.trim();
+        if (!act) return;
+
+        try {
+            const res = await fetch(`/api/activity/${encodeURIComponent(window.USER_ID)}/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ activity: act })
+            });
+            if (res.ok) {
+                input.value = '';
+                fetchDashboardData();
+            }
+        } catch (err) {
+            console.error("Error logging activity:", err);
+        }
+    }
+
+    // Log Calories & Meals
+    async function quickLogCalories(cals, mealName) {
+        try {
+            const res = await fetch(`/api/health/${encodeURIComponent(window.USER_ID)}/log_calories`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ calories: cals, meal_name: mealName })
+            });
+            if (res.ok) {
+                fetchDashboardData();
+            }
+        } catch (err) {
+            console.error("Error logging calories:", err);
+        }
+    }
+
+    // Log from Meal Card
+    function logMealFromCard(mealType) {
+        const cals = parseInt(document.getElementById(`${mealType}-cals`).textContent) || 450;
+        const name = document.getElementById(`${mealType}-title`).textContent.trim();
+        quickLogCalories(cals, name);
+    }
+
+    // Reset Day Calories
+    async function resetDayCalories() {
+        if (!confirm("Reset daily logged calorie count to 0?")) return;
+        try {
+            const res = await fetch(`/api/health/${encodeURIComponent(window.USER_ID)}/reset_calories`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                fetchDashboardData();
+            }
+        } catch (err) {
+            console.error("Error resetting calories:", err);
+        }
+    }
+
+    // Custom Calorie Modal
+    function openCustomCalorieModal() {
+        document.getElementById('custom-cal-modal').classList.remove('hidden');
+    }
+    function closeCustomCalorieModal() {
+        document.getElementById('custom-cal-modal').classList.add('hidden');
+    }
+    function submitCustomCalories() {
+        const name = document.getElementById('custom-meal-name').value.trim() || 'Custom Snack';
+        const cals = parseInt(document.getElementById('custom-meal-cals').value);
+        if (!cals || cals <= 0) {
+            alert("Please enter a valid positive number for calories.");
+            return;
+        }
+        quickLogCalories(cals, name);
+        closeCustomCalorieModal();
+        document.getElementById('custom-meal-name').value = '';
+        document.getElementById('custom-meal-cals').value = '';
+    }
+
+    // Chart.js Doughnut for Macros
+    function initMacroChart() {
+        const ctx = document.getElementById('macro-pie-chart').getContext('2d');
+        macroChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Carbs', 'Protein', 'Fat'],
+                datasets: [{
+                    data: [225, 115, 55],
+                    backgroundColor: ['#059669', '#F59E0B', '#0F766E'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true }
+                }
+            }
+        });
+    }
+
+    function renderMacroChart(c, p, f) {
+        if (!macroChartInstance) return;
+        macroChartInstance.data.datasets[0].data = [c, p, f];
+        macroChartInstance.update();
+    }
+
+    // Generate AI Recipes
+    async function generateAiRecipes() {
+        const btn = document.getElementById('generate-ai-recipes-btn');
+        const btnText = document.getElementById('gen-recipe-btn-text');
+        const skill = document.getElementById('skill-selector').value;
+        const count = parseInt(document.getElementById('recipe-count-selector').value) || 3;
+        const container = document.getElementById('recipe-recommendations-list');
+
+        btnText.textContent = "Crafting Recipes...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/recipes/generate/${encodeURIComponent(window.USER_ID)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ skill_level: skill, num_recipes: count })
+            });
+            if (!res.ok) throw new Error("Failed to generate recipes");
+            const data = await res.json();
+            const recipes = data.recipes || [];
+
+            if (recipes.length === 0) {
+                container.innerHTML = '<div class="text-xs text-gray-400 italic py-6 text-center">No recipes generated. Add items to your pantry to inspire the AI!</div>';
+            } else {
+                container.innerHTML = '';
+                recipes.forEach(r => {
+                    const div = document.createElement('div');
+                    div.className = 'p-2.5 rounded-lg bg-white border border-gray-100 mb-2 shadow-2xs hover:border-sage/40 transition';
+                    div.innerHTML = `
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-darkslate text-xs">${r.name || 'Personalized Recipe'}</span>
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sage-50 text-sage">${r.cook_time || '25'}m</span>
+                        </div>
+                        <p class="text-[11px] text-gray-500 line-clamp-2">${r.description || 'Optimized using your available pantry ingredients.'}</p>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        } catch (e) {
+            console.error("AI recipe error:", e);
+            container.innerHTML = '<div class="text-xs text-red-500 italic py-6 text-center">Failed to generate AI recipes. Please retry in a moment.</div>';
+        } finally {
+            btnText.textContent = "Generate Fresh AI Recipes";
+            btn.disabled = false;
+        }
+    }
+</script>
+{% endblock %}

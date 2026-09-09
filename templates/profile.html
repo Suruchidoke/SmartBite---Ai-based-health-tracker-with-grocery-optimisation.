@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}Health & Cuisine Profile - SmartBite{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-6 px-4 sm:px-6">
+    <!-- Header Banner -->
+    <div class="text-center mb-8">
+        <span class="inline-block text-xs font-bold uppercase tracking-widest text-sage bg-sage/10 px-3 py-1 rounded-full mb-2">Step 1 of Health Journey</span>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-darkslate tracking-tight">Personalized Health & Cuisine Profile</h1>
+        <p class="text-gray-600 text-sm max-w-xl mx-auto mt-2">
+            Tell us your health metrics and favorite world cuisines. SmartBite's AI will calculate your exact caloric budget and curate tailored meal plans.
+        </p>
+    </div>
+
+    <form action="{{ url_for('profile') }}" method="POST" id="profile-form" class="space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Health & Body Metrics -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- 1. Biometrics Card -->
+                <div class="glass-card bg-white/90 p-6 sm:p-8 rounded-2xl shadow-sm">
+                    <div class="flex items-center space-x-3 mb-6 pb-3 border-b border-gray-100">
+                        <div class="w-9 h-9 rounded-lg bg-sage/15 text-sage flex items-center justify-center font-bold">1</div>
+                        <h2 class="text-lg font-bold text-darkslate">Biometrics & Target Goals</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Full Name</label>
+                            <input type="text" name="name" id="name" value="{{ user.get('name', '') }}" placeholder="Your Name" required
+                                   class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Gender</label>
+                            <select name="gender" id="gender" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                                <option value="male" {{ 'selected' if user.get('gender') == 'male' else '' }}>Male</option>
+                                <option value="female" {{ 'selected' if user.get('gender') == 'female' else '' }}>Female</option>
+                                <option value="other" {{ 'selected' if user.get('gender') == 'other' else '' }}>Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Age (Years)</label>
+                            <input type="number" name="age" id="age" value="{{ user.get('age', 25) }}" min="12" max="100" required
+                                   class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Height (cm)</label>
+                            <input type="number" name="height" id="height" value="{{ user.get('height', 170) }}" min="100" max="250" step="0.5" required
+                                   class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Current Weight (kg)</label>
+                            <input type="number" name="weight" id="weight" value="{{ user.get('weight', 68) }}" min="30" max="250" step="0.5" required
+                                   class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Primary Fitness Goal</label>
+                            <select name="goal" id="goal" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                                <option value="weight_loss" {{ 'selected' if user.get('goal') == 'weight_loss' else '' }}>Weight Loss (Deficit)</option>
+                                <option value="maintenance" {{ 'selected' if user.get('goal') == 'maintenance' else '' }}>Maintain Weight & Health</option>
+                                <option value="muscle_gain" {{ 'selected' if user.get('goal') == 'muscle_gain' else '' }}>Muscle Gain & Hypertrophy</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Daily Physical Activity Level</label>
+                            <select name="activity_level" id="activity_level" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                                <option value="sedentary" {{ 'selected' if user.get('activity_level') == 'sedentary' else '' }}>Sedentary (Desk job, minimal daily movement)</option>
+                                <option value="lightly_active" {{ 'selected' if user.get('activity_level') == 'lightly_active' else '' }}>Lightly Active (1-3 workouts per week)</option>
+                                <option value="moderately_active" {{ 'selected' if user.get('activity_level', 'moderately_active') == 'moderately_active' else '' }}>Moderately Active (3-5 workouts per week)</option>
+                                <option value="very_active" {{ 'selected' if user.get('activity_level') == 'very_active' else '' }}>Very Active (6-7 intense workout sessions per week)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Multi-Cuisine Preferences Card -->
+                <div class="glass-card bg-white/90 p-6 sm:p-8 rounded-2xl shadow-sm">
+                    <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-gray-100">
+                        <div class="w-9 h-9 rounded-lg bg-sage/15 text-sage flex items-center justify-center font-bold">2</div>
+                        <div>
+                            <h2 class="text-lg font-bold text-darkslate">Cuisine Preferences</h2>
+                            <p class="text-xs text-gray-500">Select one or more world cuisines for your personalized meal recommendations.</p>
+                        </div>
+                    </div>
+
+                    {% set user_cuisines = user.get('cuisines', ['Indian', 'Asian', 'Mediterranean']) %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                        <label class="flex items-start p-3.5 rounded-xl border border-gray-200 hover:border-sage hover:bg-sage/5 transition cursor-pointer">
+                            <input type="checkbox" name="cuisines" value="Indian" {{ 'checked' if 'Indian' in user_cuisines else '' }}
+                                   class="mt-1 w-4 h-4 text-sage rounded focus:ring-sage">
+                            <div class="ml-3">
+                                <span class="font-bold text-sm text-darkslate flex items-center">
+                                    <span class="mr-1.5 text-base">🍛</span> Indian Cuisine
+                                </span>
+                                <p class="text-xs text-gray-500 mt-0.5">North & South Indian staples, dal, paneer tikka, roti, fragrant rice bowls.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-3.5 rounded-xl border border-gray-200 hover:border-sage hover:bg-sage/5 transition cursor-pointer">
+                            <input type="checkbox" name="cuisines" value="Asian" {{ 'checked' if 'Asian' in user_cuisines else '' }}
+                                   class="mt-1 w-4 h-4 text-sage rounded focus:ring-sage">
+                            <div class="ml-3">
+                                <span class="font-bold text-sm text-darkslate flex items-center">
+                                    <span class="mr-1.5 text-base">🥢</span> Pan-Asian
+                                </span>
+                                <p class="text-xs text-gray-500 mt-0.5">Stir-fries, ramen, pad thai, satay skewers, tofu, and miso broths.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-3.5 rounded-xl border border-gray-200 hover:border-sage hover:bg-sage/5 transition cursor-pointer">
+                            <input type="checkbox" name="cuisines" value="Mediterranean" {{ 'checked' if 'Mediterranean' in user_cuisines else '' }}
+                                   class="mt-1 w-4 h-4 text-sage rounded focus:ring-sage">
+                            <div class="ml-3">
+                                <span class="font-bold text-sm text-darkslate flex items-center">
+                                    <span class="mr-1.5 text-base">🥗</span> Mediterranean & Italian
+                                </span>
+                                <p class="text-xs text-gray-500 mt-0.5">Whole wheat pasta, Greek salads, olive oil, hummus, grilled seafood.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-3.5 rounded-xl border border-gray-200 hover:border-sage hover:bg-sage/5 transition cursor-pointer">
+                            <input type="checkbox" name="cuisines" value="Mexican" {{ 'checked' if 'Mexican' in user_cuisines else '' }}
+                                   class="mt-1 w-4 h-4 text-sage rounded focus:ring-sage">
+                            <div class="ml-3">
+                                <span class="font-bold text-sm text-darkslate flex items-center">
+                                    <span class="mr-1.5 text-base">🌮</span> Mexican & Global Fusion
+                                </span>
+                                <p class="text-xs text-gray-500 mt-0.5">Burrito bowls, black beans, fajitas, avocado guacamole, and salsa.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-3.5 rounded-xl border border-gray-200 hover:border-sage hover:bg-sage/5 transition cursor-pointer sm:col-span-2">
+                            <input type="checkbox" name="cuisines" value="Continental" {{ 'checked' if 'Continental' in user_cuisines else '' }}
+                                   class="mt-1 w-4 h-4 text-sage rounded focus:ring-sage">
+                            <div class="ml-3">
+                                <span class="font-bold text-sm text-darkslate flex items-center">
+                                    <span class="mr-1.5 text-base">🥪</span> Continental & Western
+                                </span>
+                                <p class="text-xs text-gray-500 mt-0.5">Oatmeal & fruit bowls, artisan protein sandwiches, soups, grilled chicken.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 3. Dietary Regimen & Restrictions -->
+                <div class="glass-card bg-white/90 p-6 sm:p-8 rounded-2xl shadow-sm">
+                    <div class="flex items-center space-x-3 mb-6 pb-3 border-b border-gray-100">
+                        <div class="w-9 h-9 rounded-lg bg-sage/15 text-sage flex items-center justify-center font-bold">3</div>
+                        <h2 class="text-lg font-bold text-darkslate">Dietary Regimen & Health Flags</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Dietary Type</label>
+                            <select name="diet_preference" id="diet_preference" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm" required>
+                                <option value="balanced" {{ 'selected' if user.get('diet_preference') == 'balanced' else '' }}>Balanced (No restrictions)</option>
+                                <option value="vegetarian" {{ 'selected' if user.get('diet_preference') == 'vegetarian' else '' }}>Vegetarian (Plant & Dairy)</option>
+                                <option value="vegan" {{ 'selected' if user.get('diet_preference') == 'vegan' else '' }}>Strict Vegan (100% Plant-Based)</option>
+                                <option value="high_protein" {{ 'selected' if user.get('diet_preference') == 'high_protein' else '' }}>High Protein (Fitness/Hypertrophy)</option>
+                                <option value="low_carb" {{ 'selected' if user.get('diet_preference') == 'low_carb' else '' }}>Low Carb</option>
+                                <option value="keto" {{ 'selected' if user.get('diet_preference') == 'keto' else '' }}>Keto (High Fat, Ultra Low Carb)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Specific Health Condition</label>
+                            <select name="health_condition" id="health_condition" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                                <option value="">None / General Wellness</option>
+                                <option value="diabetes" {{ 'selected' if user.get('health_condition') == 'diabetes' else '' }}>Type 2 Diabetes / Prediabetes</option>
+                                <option value="hypertension" {{ 'selected' if user.get('health_condition') == 'hypertension' else '' }}>Hypertension (Low Sodium)</option>
+                                <option value="thyroid" {{ 'selected' if user.get('health_condition') == 'thyroid' else '' }}>Thyroid Support</option>
+                                <option value="pcos" {{ 'selected' if user.get('health_condition') == 'pcos' else '' }}>PCOS / Hormonal Balance</option>
+                                <option value="high_cholesterol" {{ 'selected' if user.get('health_condition') == 'high_cholesterol' else '' }}>High Cholesterol (Heart Healthy)</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Allergies / Disliked Ingredients</label>
+                            <input type="text" name="diet_restrictions" id="diet_restrictions" value="{{ user.get('diet_restrictions', '') }}" placeholder="e.g. peanuts, shell-fish, dairy, cilantro"
+                                   class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-sage focus:border-sage bg-white text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Live Calorie & Macro Target Calculator -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-24 space-y-6">
+                    <div class="bg-gradient-to-br from-sage to-sage-dark text-white p-6 rounded-3xl shadow-lg border border-white/20">
+                        <span class="text-xs uppercase tracking-widest text-emerald-200 font-bold">Live AI Health Matrix</span>
+                        <h3 class="text-xl font-black mt-1 mb-4">Daily Nutritional Target</h3>
+
+                        <div class="bg-white/15 backdrop-blur-md rounded-2xl p-4 text-center mb-5">
+                            <div class="text-4xl font-extrabold" id="calc-calories">2,050</div>
+                            <div class="text-xs text-emerald-100 uppercase tracking-wider font-semibold mt-1">Target Daily Calories</div>
+                        </div>
+
+                        <!-- Macro Target Breakdown -->
+                        <div class="space-y-3 text-xs">
+                            <div class="flex justify-between items-center bg-white/10 p-2.5 rounded-xl">
+                                <span class="font-medium flex items-center">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-300 mr-2"></span> Protein
+                                </span>
+                                <span class="font-bold text-sm" id="calc-protein">154g (30%)</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-white/10 p-2.5 rounded-xl">
+                                <span class="font-medium flex items-center">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-300 mr-2"></span> Carbs
+                                </span>
+                                <span class="font-bold text-sm" id="calc-carbs">230g (45%)</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-white/10 p-2.5 rounded-xl">
+                                <span class="font-medium flex items-center">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-rose-300 mr-2"></span> Healthy Fats
+                                </span>
+                                <span class="font-bold text-sm" id="calc-fats">57g (25%)</span>
+                            </div>
+                        </div>
+
+                        <!-- Computed Metrics -->
+                        <div class="mt-5 pt-4 border-t border-white/20 grid grid-cols-2 gap-2 text-center text-xs">
+                            <div>
+                                <div class="text-emerald-100 font-medium">BMI</div>
+                                <div class="font-extrabold text-base" id="calc-bmi">23.5</div>
+                            </div>
+                            <div>
+                                <div class="text-emerald-100 font-medium">BMR (Basal)</div>
+                                <div class="font-extrabold text-base" id="calc-bmr">1,620 kcal</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submit-btn" class="w-full bg-darkslate hover:bg-black text-white font-bold py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl transition transform hover:-translate-y-0.5 flex items-center justify-center space-x-2 text-base">
+                        <span>Save & Generate Meal Plan</span>
+                        <i class="fas fa-arrow-right text-sm"></i>
+                    </button>
+                    
+                    <p class="text-center text-xs text-gray-500">
+                        SmartBite uses Mifflin-St Jeor metabolic equations and cuisine datasets to engineer your meal plan.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Live calculation of BMR, TDEE, Calorie Goal & Macro Splits
+    function updateMetrics() {
+        const age = parseFloat(document.getElementById('age').value) || 25;
+        const height = parseFloat(document.getElementById('height').value) || 170;
+        const weight = parseFloat(document.getElementById('weight').value) || 68;
+        const gender = document.getElementById('gender').value;
+        const goal = document.getElementById('goal').value;
+        const activity = document.getElementById('activity_level').value;
+
+        // BMI Calculation
+        const heightM = height / 100;
+        const bmi = (weight / (heightM * heightM)).toFixed(1);
+        document.getElementById('calc-bmi').innerText = bmi;
+
+        // Mifflin-St Jeor BMR
+        let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+        if (gender === 'male') {
+            bmr += 5;
+        } else {
+            bmr -= 161;
+        }
+        document.getElementById('calc-bmr').innerText = Math.round(bmr).toLocaleString() + ' kcal';
+
+        // TDEE Multipliers
+        const activityMultipliers = {
+            'sedentary': 1.2,
+            'lightly_active': 1.375,
+            'moderately_active': 1.55,
+            'very_active': 1.725
+        };
+        const tdee = bmr * (activityMultipliers[activity] || 1.4);
+
+        // Goal Adjustment
+        let targetCal = tdee;
+        if (goal === 'weight_loss') {
+            targetCal -= 400;
+        } else if (goal === 'muscle_gain') {
+            targetCal += 350;
+        }
+        targetCal = Math.max(1200, Math.round(targetCal));
+        document.getElementById('calc-calories').innerText = targetCal.toLocaleString();
+
+        // Macro Splits (30% Protein, 45% Carbs, 25% Fat)
+        const proteinG = Math.round((targetCal * 0.30) / 4);
+        const carbsG = Math.round((targetCal * 0.45) / 4);
+        const fatG = Math.round((targetCal * 0.25) / 9);
+
+        document.getElementById('calc-protein').innerText = `${proteinG}g (30%)`;
+        document.getElementById('calc-carbs').innerText = `${carbsG}g (45%)`;
+        document.getElementById('calc-fats').innerText = `${fatG}g (25%)`;
+    }
+
+    // Attach real-time event listeners
+    ['age', 'height', 'weight', 'gender', 'goal', 'activity_level'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', updateMetrics);
+            el.addEventListener('change', updateMetrics);
+        }
+    });
+
+    // Run once on load
+    document.addEventListener('DOMContentLoaded', updateMetrics);
+
+    // Form submission animation
+    document.getElementById('profile-form').addEventListener('submit', function() {
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Analyzing Cuisines & Generating Plan...`;
+    });
+</script>
+{% endblock %}

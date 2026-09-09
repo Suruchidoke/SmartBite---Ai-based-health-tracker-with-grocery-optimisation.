@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartBite - Fitness Games & Challenges</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      --color-sage-green: #8FBC8F;
+      --color-beige: #F5F5DC;
+      --color-off-white: #FCFCF4;
+      --color-dark-grey: #36454F;
+      --color-darker-sage-green: #7B9F7B;
+    }
+    .bg-sage-green { background-color: var(--color-sage-green); }
+    .bg-beige { background-color: var(--color-beige); }
+    .bg-off-white { background-color: var(--color-off-white); }
+    .text-dark-grey { color: var(--color-dark-grey); }
+    .text-sage-green { color: var(--color-sage-green); }
+    .border-sage-green { border-color: var(--color-sage-green); }
+
+    .card {
+      background-color: var(--color-off-white);
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.12);
+    }
+  </style>
+</head>
+<body class="bg-beige text-dark-grey min-h-screen flex flex-col justify-between py-12">
+
+  <main class="flex-grow container mx-auto px-4 max-w-4xl">
+    <!-- Header -->
+    <div class="text-center mb-10">
+      <h1 class="text-3xl md:text-4xl font-bold text-dark-grey mb-3">Fitness Games & Challenges Hub</h1>
+      <p class="text-md text-sage-green max-w-md mx-auto">Gamified quizzes and trackable fitness challenges to keep you active and healthy! 🏆</p>
+    </div>
+
+    <!-- Active Games & Challenges Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Yoga Pose Quiz -->
+      <div class="card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-3 mb-3">
+            <span class="text-3xl bg-sage-green bg-opacity-20 p-2.5 rounded-full">🧘‍♂️</span>
+            <h2 class="text-xl font-bold text-dark-grey">Yoga Pose Quiz</h2>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">Learn and identify different yoga postures. Predict poses and test your knowledge of flexibility and mindfulness.</p>
+        </div>
+        <a href="{{ url_for('yoga_pose_quiz') }}" class="w-full text-center bg-sage-green text-white py-2.5 rounded-full font-semibold hover:bg-green-700 transition duration-300 shadow-sm">Play Quiz</a>
+      </div>
+
+      <!-- Nutrition Label Quiz -->
+      <div class="card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-3 mb-3">
+            <span class="text-3xl bg-sage-green bg-opacity-20 p-2.5 rounded-full">📊</span>
+            <h2 class="text-xl font-bold text-dark-grey">Nutrition Label Quiz</h2>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">Test your ability to read food packaging labels. Learn to spot hidden sugars, count daily values, and select healthy grocery items.</p>
+        </div>
+        <a href="{{ url_for('nutrition_label_quiz') }}" class="w-full text-center bg-sage-green text-white py-2.5 rounded-full font-semibold hover:bg-green-700 transition duration-300 shadow-sm">Play Quiz</a>
+      </div>
+
+      <!-- Plank Timer Challenge -->
+      <div class="card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-3 mb-3">
+            <span class="text-3xl bg-sage-green bg-opacity-20 p-2.5 rounded-full">⏱️</span>
+            <h2 class="text-xl font-bold text-dark-grey">Plank Timer Challenge</h2>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">Challenge yourself to a core stability test. Set your timer, hold the plank posture, and unlock achievements based on hold times.</p>
+        </div>
+        <a href="{{ url_for('plank_timer') }}" class="w-full text-center bg-sage-green text-white py-2.5 rounded-full font-semibold hover:bg-green-700 transition duration-300 shadow-sm">Start Challenge</a>
+      </div>
+
+      <!-- Repetition Counter -->
+      <div class="card flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-3 mb-3">
+            <span class="text-3xl bg-sage-green bg-opacity-20 p-2.5 rounded-full">💪</span>
+            <h2 class="text-xl font-bold text-dark-grey">Repetition Counter</h2>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">Track your squats, pushups, and sit-ups. Maintain a log of your active sessions and beat your personal best daily count.</p>
+        </div>
+        <a href="{{ url_for('repetition_counter') }}" class="w-full text-center bg-sage-green text-white py-2.5 rounded-full font-semibold hover:bg-green-700 transition duration-300 shadow-sm">Start Counter</a>
+      </div>
+
+    </div>
+
+    <!-- Navigation Options -->
+    <div class="mt-12 flex flex-col sm:flex-row justify-center items-center gap-4">
+      <a href="{{ url_for('dashboard') }}" class="px-6 py-2.5 rounded-full border border-sage-green text-sage-green font-medium hover:bg-sage-green hover:text-white transition duration-300 flex items-center justify-center space-x-2">
+        <i class="fas fa-home"></i>
+        <span>Back to Dashboard</span>
+      </a>
+      <a href="{{ url_for('achievements') }}" class="px-6 py-2.5 rounded-full border border-sage-green text-sage-green font-medium hover:bg-sage-green hover:text-white transition duration-300 flex items-center justify-center space-x-2">
+        <i class="fas fa-trophy"></i>
+        <span>View Achievements</span>
+      </a>
+    </div>
+  </main>
+
+  <footer class="text-center text-xs text-gray-500 py-6">
+    <p>&copy; 2025 SmartBite. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

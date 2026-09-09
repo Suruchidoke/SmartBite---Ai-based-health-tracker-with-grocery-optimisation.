@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartBite - Product Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      --color-sage-green: #8FBC8F;
+      --color-beige: #F5F5DC;
+      --color-off-white: #FCFCF4;
+      --color-dark-grey: #36454F;
+      --color-darker-sage-green: #7B9F7B;
+    }
+    .bg-sage-green { background-color: var(--color-sage-green); }
+    .bg-beige { background-color: var(--color-beige); }
+    .bg-off-white { background-color: var(--color-off-white); }
+    .text-dark-grey { color: var(--color-dark-grey); }
+    .text-sage-green { color: var(--color-sage-green); }
+    .nutrient-bar {
+      transition: width 0.3s ease;
+    }
+    .price-history-chart {
+      height: 200px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-beige min-h-screen">
+  <!-- Navigation -->
+  <nav class="bg-off-white shadow-sm border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <a href="{{ url_for('grocery') }}" class="text-sage-green hover:text-darker-sage-green font-semibold">
+            ← Back to Grocery
+          </a>
+        </div>
+        <div class="text-dark-grey font-semibold">SmartBite Product Details</div>
+        <div class="flex items-center space-x-4">
+          <a href="{{ url_for('dashboard') }}" class="text-sage-green hover:text-darker-sage-green">
+            Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Product Header -->
+    <div class="bg-off-white rounded-lg shadow-lg p-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Product Image -->
+        <div class="flex justify-center">
+          <div class="w-80 h-80 bg-beige rounded-lg flex items-center justify-center">
+            <span class="text-6xl">🍎</span> <!-- Placeholder for product image -->
+          </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="space-y-4">
+          <div>
+            <h1 id="productName" class="text-3xl font-bold text-dark-grey mb-2">Product Name</h1>
+            <p id="productCategory" class="text-sage-green text-lg">Category</p>
+          </div>
+
+          <!-- Rating -->
+          <div class="flex items-center space-x-2">
+            <div id="productRating" class="flex text-yellow-500">
+              ★★★★★
+            </div>
+            <span id="ratingValue" class="text-dark-grey">4.5</span>
+            <span class="text-gray-500">({{ reviews_count }}) reviews</span>
+          </div>
+
+          <!-- Price -->
+          <div class="space-y-2">
+            <div class="flex items-center space-x-4">
+              <span id="currentPrice" class="text-3xl font-bold text-dark-grey">₹0</span>
+              <span id="originalPrice" class="text-xl text-gray-500 line-through">₹0</span>
+              <span id="discountBadge" class="bg-red-500 text-white px-2 py-1 rounded text-sm">0% OFF</span>
+            </div>
+            <p class="text-sm text-gray-600">Price per unit</p>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <h3 class="text-lg font-semibold text-dark-grey mb-2">Description</h3>
+            <p id="productDescription" class="text-gray-700">Product description will be displayed here.</p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex space-x-4 pt-4">
+            <button id="addToPantryBtn" class="flex-1 bg-sage-green text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+              Add to Pantry
+            </button>
+            <button id="addToCartBtn" class="flex-1 bg-beige text-dark-grey px-6 py-3 rounded-lg font-semibold border hover:bg-gray-200 transition">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Information Tabs -->
+    <div class="bg-off-white rounded-lg shadow-lg overflow-hidden mb-8">
+      <div class="border-b">
+        <nav class="flex">
+          <button id="nutritionTab" class="tab-btn px-6 py-4 text-dark-grey font-semibold border-b-2 border-sage-green bg-sage-green bg-opacity-10">
+            Nutrition Facts
+          </button>
+          <button id="priceHistoryTab" class="tab-btn px-6 py-4 text-gray-600 font-semibold hover:text-dark-grey">
+            Price History
+          </button>
+          <button id="reviewsTab" class="tab-btn px-6 py-4 text-gray-600 font-semibold hover:text-dark-grey">
+            Reviews
+          </button>
+          <button id="relatedTab" class="tab-btn px-6 py-4 text-gray-600 font-semibold hover:text-dark-grey">
+            Related Products
+          </button>
+        </nav>
+      </div>
+
+      <div class="p-6">
+        <!-- Nutrition Tab Content -->
+        <div id="nutritionContent" class="tab-content">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Nutritional Information -->
+            <div>
+              <h3 class="text-xl font-semibold text-dark-grey mb-4">Nutritional Information</h3>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="font-medium">Calories:</span>
+                  <span id="calories" class="text-dark-grey">0 kcal</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Protein:</span>
+                  <span id="protein" class="text-dark-grey">0g</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Carbohydrates:</span>
+                  <span id="carbs" class="text-dark-grey">0g</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Fat:</span>
+                  <span id="fat" class="text-dark-grey">0g</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Fiber:</span>
+                  <span id="fiber" class="text-dark-grey">0g</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="font-medium">Sugar:</span>
+                  <span id="sugar" class="text-dark-grey">0g</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Macro Nutrient Breakdown -->
+            <div>
+              <h3 class="text-xl font-semibold text-dark-grey mb-4">Macro Nutrient Breakdown</h3>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium">Protein</span>
+                    <span id="proteinPercent" class="text-sm text-dark-grey">0%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="proteinBar" class="nutrient-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium">Carbohydrates</span>
+                    <span id="carbsPercent" class="text-sm text-dark-grey">0%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="carbsBar" class="nutrient-bar bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between mb-1">
+                    <span class="text-sm font-medium">Fat</span>
+                    <span id="fatPercent" class="text-sm text-dark-grey">0%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="fatBar" class="nutrient-bar bg-yellow-500 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Health Benefits -->
+          <div class="mt-8">
+            <h3 class="text-xl font-semibold text-dark-grey mb-4">Health Benefits</h3>
+            <div id="healthBenefits" class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <!-- Benefits will be populated here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Price History Tab Content -->
+        <div id="priceHistoryContent" class="tab-content hidden">
+          <h3 class="text-xl font-semibold text-dark-grey mb-4">Price History</h3>
+          <div class="price-history-chart bg-beige p-4 rounded-lg">
+            <canvas id="priceChart"></canvas>
+          </div>
+          <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-beige p-4 rounded-lg">
+              <h4 class="font-semibold text-dark-grey">Current Price</h4>
+              <p id="currentPriceHistory" class="text-2xl font-bold text-sage-green">₹0</p>
+            </div>
+            <div class="bg-beige p-4 rounded-lg">
+              <h4 class="font-semibold text-dark-grey">Average Price</h4>
+              <p id="averagePrice" class="text-2xl font-bold text-dark-grey">₹0</p>
+            </div>
+            <div class="bg-beige p-4 rounded-lg">
+              <h4 class="font-semibold text-dark-grey">Price Trend</h4>
+              <p id="priceTrend" class="text-lg text-green-600">↗ Stable</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews Tab Content -->
+        <div id="reviewsContent" class="tab-content hidden">
+          <h3 class="text-xl font-semibold text-dark-grey mb-4">Customer Reviews</h3>
+          <div id="reviewsList" class="space-y-4">
+            <!-- Reviews will be populated here -->
+          </div>
+        </div>
+
+        <!-- Related Products Tab Content -->
+        <div id="relatedContent" class="tab-content hidden">
+          <h3 class="text-xl font-semibold text-dark-grey mb-4">Related Products</h3>
+          <div id="relatedProducts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Related products will be populated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div id="notification" class="fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 hidden">
+    <span id="notificationText"></span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const userId = "{{ user }}";
+    const productId = "{{ product_id }}";
+    let currentProduct = null;
+    let priceChart = null;
+
+    // Tab switching functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Remove active class from all tabs
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('border-b-2', 'border-sage-green', 'bg-sage-green', 'bg-opacity-10');
+          b.classList.add('text-gray-600');
+        });
+
+        // Add active class to clicked tab
+        this.classList.add('border-b-2', 'border-sage-green', 'bg-sage-green', 'bg-opacity-10');
+        this.classList.remove('text-gray-600');
+
+        // Hide all tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.add('hidden');
+        });
+
+        // Show selected tab content
+        const tabId = this.id.replace('Tab', 'Content');
+        document.getElementById(tabId).classList.remove('hidden');
+      });
+    });
+
+    // Load product details
+    async function loadProductDetails() {
+      try {
+        const response = await fetch(`/api/grocery/product/${productId}`);
+        if (response.ok) {
+          currentProduct = await response.json();
+          populateProductDetails(currentProduct);
+        } else {
+          console.error('Failed to load product details');
+        }
+      } catch (error) {
+        console.error('Error loading product details:', error);
+      }
+    }
+
+    function populateProductDetails(product) {
+      // Basic product info
+      document.getElementById('productName').textContent = product.name;
+      document.getElementById('productCategory').textContent = product.category;
+      document.getElementById('currentPrice').textContent = `₹${product.price}`;
+      document.getElementById('originalPrice').textContent = product.originalPrice > product.price ? `₹${product.originalPrice}` : '';
+      document.getElementById('discountBadge').textContent = product.discount > 0 ? `${product.discount}% OFF` : '';
+      document.getElementById('productDescription').textContent = product.description;
+
+      // Rating
+      const ratingValue = product.rating || 4.5;
+      document.getElementById('ratingValue').textContent = ratingValue;
+      const stars = '★'.repeat(Math.floor(ratingValue)) + '☆'.repeat(5 - Math.floor(ratingValue));
+      document.getElementById('productRating').textContent = stars;
+
+      // Nutrition information
+      populateNutritionInfo(product);
+      populateHealthBenefits(product.nutritional_benefits || []);
+
+      // Load price history
+      loadPriceHistory(product.name);
+
+      // Load reviews
+      loadReviews(product.name);
+
+      // Load related products
+      loadRelatedProducts(product.category);
+    }
+
+    function populateNutritionInfo(product) {
+      // Sample nutrition data - in real implementation, this would come from the dataset
+      const nutritionData = {
+        calories: 150,
+        protein: 5,
+        carbs: 30,
+        fat: 2,
+        fiber: 4,
+        sugar: 20
+      };
+
+      document.getElementById('calories').textContent = `${nutritionData.calories} kcal`;
+      document.getElementById('protein').textContent = `${nutritionData.protein}g`;
+      document.getElementById('carbs').textContent = `${nutritionData.carbs}g`;
+      document.getElementById('fat').textContent = `${nutritionData.fat}g`;
+      document.getElementById('fiber').textContent = `${nutritionData.fiber}g`;
+      document.getElementById('sugar').textContent = `${nutritionData.sugar}g`;
+
+      // Calculate percentages
+      const total = nutritionData.protein + nutritionData.carbs + nutritionData.fat;
+      const proteinPercent = (nutritionData.protein / total * 100).toFixed(1);
+      const carbsPercent = (nutritionData.carbs / total * 100).toFixed(1);
+      const fatPercent = (nutritionData.fat / total * 100).toFixed(1);
+
+      document.getElementById('proteinPercent').textContent = `${proteinPercent}%`;
+      document.getElementById('carbsPercent').textContent = `${carbsPercent}%`;
+      document.getElementById('fatPercent').textContent = `${fatPercent}%`;
+
+      document.getElementById('proteinBar').style.width = `${proteinPercent}%`;
+      document.getElementById('carbsBar').style.width = `${carbsPercent}%`;
+      document.getElementById('fatBar').style.width = `${fatPercent}%`;
+    }
+
+    function populateHealthBenefits(benefits) {
+      const benefitsContainer = document.getElementById('healthBenefits');
+      benefitsContainer.innerHTML = benefits.map(benefit =>
+        `<div class="bg-sage-green bg-opacity-10 p-3 rounded-lg">
+          <span class="text-sage-green font-medium">✓</span> ${benefit}
+        </div>`
+      ).join('');
+    }
+
+    async function loadPriceHistory(productName) {
+      // Sample price history data
+      const priceHistory = [
+        { date: '2024-01-01', price: 100 },
+        { date: '2024-01-08', price: 95 },
+        { date: '2024-01-15', price: 90 },
+        { date: '2024-01-22', price: 85 },
+        { date: '2024-01-29', price: 85 },
+        { date: '2024-02-05', price: 80 },
+        { date: '2024-02-12', price: 85 }
+      ];
+
+      createPriceChart(priceHistory);
+    }
+
+    function createPriceChart(priceHistory) {
+      const ctx = document.getElementById('priceChart').getContext('2d');
+
+      if (priceChart) {
+        priceChart.destroy();
+      }
+
+      priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: priceHistory.map(item => new Date(item.date).toLocaleDateString()),
+          datasets: [{
+            label: 'Price (₹)',
+            data: priceHistory.map(item => item.price),
+            borderColor: 'rgb(143, 188, 143)',
+            backgroundColor: 'rgba(143, 188, 143, 0.1)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: false,
+              ticks: {
+                callback: function(value) {
+                  return '₹' + value;
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+
+      // Update price statistics
+      const prices = priceHistory.map(item => item.price);
+      const currentPrice = prices[prices.length - 1];
+      const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+      const trend = prices[prices.length - 1] > prices[0] ? '↗ Increasing' : '↘ Decreasing';
+
+      document.getElementById('currentPriceHistory').textContent = `₹${currentPrice}`;
+      document.getElementById('averagePrice').textContent = `₹${Math.round(averagePrice)}`;
+      document.getElementById('priceTrend').textContent = trend;
+    }
+
+    async function loadReviews(productName) {
+      // Sample reviews
+      const reviews = [
+        {
+          user: "HealthNut123",
+          rating: 5,
+          comment: "Great quality product! Really helps with my daily nutrition goals.",
+          date: "2024-02-10"
+        },
+        {
+          user: "FitnessFan",
+          rating: 4,
+          comment: "Good value for money. Would recommend to others.",
+          date: "2024-02-08"
+        },
+        {
+          user: "WellnessGuru",
+          rating: 5,
+          comment: "Perfect for my dietary requirements. Excellent nutritional profile.",
+          date: "2024-02-05"
+        }
+      ];
+
+      const reviewsContainer = document.getElementById('reviewsList');
+      reviewsContainer.innerHTML = reviews.map(review => `
+        <div class="border-b pb-4">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="font-semibold text-dark-grey">${review.user}</div>
+              <div class="flex text-yellow-500 text-sm">
+                ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+              </div>
+            </div>
+            <div class="text-sm text-gray-500">${new Date(review.date).toLocaleDateString()}</div>
+          </div>
+          <p class="text-gray-700">${review.comment}</p>
+        </div>
+      `).join('');
+    }
+
+    async function loadRelatedProducts(category) {
+      try {
+        const response = await fetch('/api/grocery/products');
+        if (response.ok) {
+          const products = await response.json();
+          const relatedProducts = products
+            .filter(p => p.category === category && p.name !== currentProduct?.name)
+            .slice(0, 6);
+
+          const relatedContainer = document.getElementById('relatedProducts');
+          relatedContainer.innerHTML = relatedProducts.map(product => `
+            <div class="bg-beige p-4 rounded-lg">
+              <h4 class="font-semibold text-dark-grey mb-2">${product.name}</h4>
+              <p class="text-sage-green text-sm mb-2">${product.category}</p>
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-dark-grey">₹${product.price}</span>
+                <button class="bg-sage-green text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                        onclick="addToCart('${product.name}')">
+                  Add
+                </button>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading related products:', error);
+      }
+    }
+
+    // Add to cart/pantry functions
+    async function addToPantry() {
+      if (!currentProduct) return;
+
+      try {
+        const response = await fetch(`/api/grocery/${encodeURIComponent(userId)}/pantry/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item: currentProduct.name })
+        });
+
+        if (response.ok) {
+          showNotification('Added to pantry successfully!', 'success');
+        } else {
+          showNotification('Failed to add to pantry', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error adding to pantry', 'error');
+      }
+    }
+
+    async function addToCart() {
+      if (!currentProduct) return;
+
+      try {
+        const response = await fetch(`/api/grocery/${encodeURIComponent(userId)}/shopping/add`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ item: currentProduct.name })
+        });
+
+        if (response.ok) {
+          showNotification('Added to shopping list successfully!', 'success');
+        } else {
+          showNotification('Failed to add to shopping list', 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error adding to shopping list', 'error');
+      }
+    }
+
+    function showNotification(message, type) {
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notificationText');
+
+      notificationText.textContent = message;
+      notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+      }`;
+      notification.classList.remove('hidden');
+
+      setTimeout(() => {
+        notification.classList.add('hidden');
+      }, 3000);
+    }
+
+    // Event listeners
+    document.getElementById('addToPantryBtn').addEventListener('click', addToPantry);
+    document.getElementById('addToCartBtn').addEventListener('click', addToCart);
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      loadProductDetails();
+    });
+  </script>
+</body>
+</html>

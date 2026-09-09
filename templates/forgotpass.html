@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBite - Forgot Password</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS variables for your color palette */
+        body {
+            font-family: 'Inter', sans-serif;
+            --color-sage-green: #8FBC8F;
+            --color-beige: #F5F5DC;
+            --color-off-white: #FCFCF4;
+            --color-dark-grey: #36454F;
+            --color-darker-sage-green: #7B9F7B;
+            --color-dark-beige: #E0D8C4; /* A slightly darker beige */
+        }
+
+        /* Applying custom colors using Tailwind utility classes */
+        .bg-sage-green { background-color: var(--color-sage-green); }
+        .bg-beige { background-color: var(--color-beige); }
+        .bg-off-white { background-color: var(--color-off-white); }
+        .bg-dark-beige { background-color: var(--color-dark-beige); }
+        .text-dark-grey { color: var(--color-dark-grey); }
+        .text-sage-green { color: var(--color-sage-green); }
+        .border-sage-green { border-color: var(--color-sage-green); }
+
+        /* Hover effects for buttons and links */
+        .hover\:bg-sage-green-dark:hover { background-color: var(--color-darker-sage-green); }
+        .hover\:text-sage-green-dark:hover { color: var(--color-darker-sage-green); }
+
+        /* Specific styling for the mobile menu (initially hidden) */
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            background-color: var(--color-off-white);
+            position: absolute;
+            top: 100%;
+            left: 0;
+            padding: 1rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0 0 0.5rem 0.5rem;
+        }
+        .mobile-menu.active {
+            display: flex;
+        }
+
+        /* Form specific styles */
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            color: var(--color-dark-grey);
+            background-color: var(--color-off-white);
+            transition: border-color 0.3s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--color-sage-green);
+            box-shadow: 0 0 0 2px rgba(143, 188, 143, 0.3); /* Sage green shadow */
+        }
+
+        /* Style for the combined input + button box */
+        .combined-input-box {
+            display: flex;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 0.5rem;
+            padding: 0.5rem; /* Slightly less padding than standalone input */
+            background-color: var(--color-off-white);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .combined-input-box:focus-within {
+            border-color: var(--color-sage-green);
+            box-shadow: 0 0 0 2px rgba(143, 188, 143, 0.3);
+        }
+        .combined-input-box .input-field-inner {
+            flex-grow: 1;
+            border: none;
+            background-color: transparent;
+            outline: none;
+            padding: 0; /* Remove inner padding as container has it */
+            color: var(--color-dark-grey);
+            font-size: 1rem;
+        }
+        .country-code-select {
+            padding: 0.25rem 0.5rem;
+            border: none;
+            background-color: transparent;
+            color: var(--color-dark-grey);
+            font-size: 1rem;
+            -webkit-appearance: none; /* Remove default arrow on WebKit */
+            -moz-appearance: none; /* Remove default arrow on Firefox */
+            appearance: none; /* Remove default arrow */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpolygon points='0,0 10,0 5,6' fill='%23666'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 0.6em auto;
+            border-right: 1px solid #ccc; /* Separator line */
+            padding-right: 1.5rem; /* Space for custom arrow */
+            width: 80px; /* Adjusted width for country code select */
+            flex-shrink: 0; /* Prevent it from shrinking */
+        }
+    </style>
+</head>
+<body class="bg-beige text-dark-grey min-h-screen flex flex-col">
+
+    <!-- Header Section -->
+    <header class="bg-off-white shadow-md py-4 sticky top-0 z-50 rounded-b-lg">
+        <div class="container mx-auto px-4 flex justify-between items-center relative">
+            <!-- Logo Image in top-left corner -->
+            <a href="#" class="flex items-center">
+                <img src="logo.png" alt="SmartBite Logo" class="h-16 mr-2 rounded-full">
+            </a>
+
+            <!-- SmartBite text and Main Navigation (for desktop) -->
+            <nav class="hidden md:flex items-center space-x-6">
+                <span class="text-3xl font-bold text-sage-green">SmartBite</span>
+            </nav>
+
+            <!-- Login/Sign Up Buttons (for desktop) -->
+            <div class="hidden md:flex space-x-4">
+                <button class="bg-sage-green text-white px-6 py-2 rounded-full hover:bg-sage-green-dark transition-colors duration-300 shadow-md">
+                    Sign Up
+                </button>
+                <button class="border border-sage-green text-sage-green px-6 py-2 rounded-full hover:bg-sage-green hover:text-white transition-colors duration-300 shadow-md">
+                    Sign In
+                </button>
+            </div>
+
+            <!-- Mobile Menu Button (Hamburger Icon) -->
+            <button id="mobile-menu-button" class="md:hidden text-dark-grey focus:outline-none">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+
+            <!-- Mobile Menu Content (initially hidden, toggled by JS) -->
+            <div id="mobile-menu" class="mobile-menu md:hidden">
+                <div class="mt-4 pt-4 border-t border-gray-200 flex flex-col space-y-3 px-4">
+                    <button class="bg-sage-green text-white px-6 py-2 rounded-full hover:bg-sage-green-dark transition-colors duration-300 shadow-md">
+                        Sign Up
+                    </button>
+                    <button class="border border-sage-green text-sage-green px-6 py-2 rounded-full hover:bg-sage-green hover:text-white transition-colors duration-300 shadow-md">
+                        Sign In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content: Forgot Password Form -->
+    <main class="flex-grow flex items-center justify-center py-12 px-4">
+        <div class="bg-off-white p-8 md:p-10 rounded-lg shadow-xl w-full max-w-md border border-gray-200">
+            <h2 class="text-3xl font-bold text-center text-dark-grey mb-6">Forgot Password?</h2>
+            <p class="text-center text-dark-grey mb-6" id="instruction-text">Enter your registered mobile number to receive an OTP for password reset.</p>
+
+            <form id="forgot-password-form" class="space-y-6">
+                <div id="mobile-input-section">
+                    <label for="mobile-number" class="block text-dark-grey text-sm font-medium mb-2">Mobile Number</label>
+                    <div class="combined-input-box space-x-2">
+                        <select id="country-code" class="country-code-select">
+                            <option value="+93">+93 (Afghanistan)</option>
+                            <option value="+355">+355 (Albania)</option>
+                            <option value="+213">+213 (Algeria)</option>
+                            <option value="+1684">+1684 (American Samoa)</option>
+                            <option value="+376">+376 (Andorra)</option>
+                            <option value="+244">+244 (Angola)</option>
+                            <option value="+1264">+1264 (Anguilla)</option>
+                            <option value="+672">+672 (Antarctica)</option>
+                            <option value="+1268">+1268 (Antigua & Barbuda)</option>
+                            <option value="+54">+54 (Argentina)</option>
+                            <option value="+374">+374 (Armenia)</option>
+                            <option value="+297">+297 (Aruba)</option>
+                            <option value="+61">+61 (Australia)</option>
+                            <option value="+43">+43 (Austria)</option>
+                            <option value="+994">+994 (Azerbaijan)</option>
+                            <option value="+1242">+1242 (Bahamas)</option>
+                            <option value="+973">+973 (Bahrain)</option>
+                            <option value="+880">+880 (Bangladesh)</option>
+                            <option value="+1246">+1246 (Barbados)</option>
+                            <option value="+375">+375 (Belarus)</option>
+                            <option value="+32">+32 (Belgium)</option>
+                            <option value="+501">+501 (Belize)</option>
+                            <option value="+229">+229 (Benin)</option>
+                            <option value="+1441">+1441 (Bermuda)</option>
+                            <option value="+975">+975 (Bhutan)</option>
+                            <option value="+591">+591 (Bolivia)</option>
+                            <option value="+387">+387 (Bosnia & Herzegovina)</option>
+                            <option value="+267">+267 (Botswana)</option>
+                            <option value="+55">+55 (Brazil)</option>
+                            <option value="+246">+246 (British Indian Ocean Terr.)</option>
+                            <option value="+1284">+1284 (British Virgin Islands)</option>
+                            <option value="+673">+673 (Brunei)</option>
+                            <option value="+359">+359 (Bulgaria)</option>
+                            <option value="+226">+226 (Burkina Faso)</option>
+                            <option value="+257">+257 (Burundi)</option>
+                            <option value="+855">+855 (Cambodia)</option>
+                            <option value="+237">+237 (Cameroon)</option>
+                            <option value="+1">+1 (Canada)</option>
+                            <option value="+238">+238 (Cape Verde)</option>
+                            <option value="+345">+345 (Cayman Islands)</option>
+                            <option value="+236">+236 (Central African Republic)</option>
+                            <option value="+235">+235 (Chad)</option>
+                            <option value="+56">+56 (Chile)</option>
+                            <option value="+86">+86 (China)</option>
+                            <option value="+61">+61 (Christmas Island)</option>
+                            <option value="+61">+61 (Cocos (Keeling) Islands)</option>
+                            <option value="+57">+57 (Colombia)</option>
+                            <option value="+269">+269 (Comoros)</option>
+                            <option value="+242">+242 (Congo - Brazzaville)</option>
+                            <option value="+243">+243 (Congo - Kinshasa)</option>
+                            <option value="+682">+682 (Cook Islands)</option>
+                            <option value="+506">+506 (Costa Rica)</option>
+                            <option value="+225">+225 (Côte d’Ivoire)</option>
+                            <option value="+385">+385 (Croatia)</option>
+                            <option value="+53">+53 (Cuba)</option>
+                            <option value="+357">+357 (Cyprus)</option>
+                            <option value="+420">+420 (Czechia)</option>
+                            <option value="+45">+45 (Denmark)</option>
+                            <option value="+253">+253 (Djibouti)</option>
+                            <option value="+1767">+1767 (Dominica)</option>
+                            <option value="+1809">+1809 (Dominican Republic)</option>
+                            <option value="+593">+593 (Ecuador)</option>
+                            <option value="+20">+20 (Egypt)</option>
+                            <option value="+503">+503 (El Salvador)</option>
+                            <option value="+240">+240 (Equatorial Guinea)</option>
+                            <option value="+291">+291 (Eritrea)</option>
+                            <option value="+372">+372 (Estonia)</option>
+                            <option value="+251">+251 (Ethiopia)</option>
+                            <option value="+500">+500 (Falkland Islands)</option>
+                            <option value="+298">+298 (Faroe Islands)</option>
+                            <option value="+679">+679 (Fiji)</option>
+                            <option value="+358">+358 (Finland)</option>
+                            <option value="+33">+33 (France)</option>
+                            <option value="+594">+594 (French Guiana)</option>
+                            <option value="+689">+689 (French Polynesia)</option>
+                            <option value="+241">+241 (Gabon)</option>
+                            <option value="+220">+220 (Gambia)</option>
+                            <option value="+995">+995 (Georgia)</option>
+                            <option value="+49">+49 (Germany)</option>
+                            <option value="+233">+233 (Ghana)</option>
+                            <option value="+350">+350 (Gibraltar)</option>
+                            <option value="+30">+30 (Greece)</option>
+                            <option value="+299">+299 (Greenland)</option>
+                            <option value="+1473">+1473 (Grenada)</option>
+                            <option value="+590">+590 (Guadeloupe)</option>
+                            <option value="+1671">+1671 (Guam)</option>
+                            <option value="+502">+502 (Guatemala)</option>
+                            <option value="+44">+44 (Guernsey)</option>
+                            <option value="+224">+224 (Guinea)</option>
+                            <option value="+245">+245 (Guinea-Bissau)</option>
+                            <option value="+592">+592 (Guyana)</option>
+                            <option value="+509">+509 (Haiti)</option>
+                            <option value="+379">+379 (Holy See)</option>
+                            <option value="+504">+504 (Honduras)</option>
+                            <option value="+852">+852 (Hong Kong)</option>
+                            <option value="+36">+36 (Hungary)</option>
+                            <option value="+354">+354 (Iceland)</option>
+                            <option value="+91" selected>+91 (India)</option>
+                            <option value="+62">+62 (Indonesia)</option>
+                            <option value="+98">+98 (Iran)</option>
+                            <option value="+964">+964 (Iraq)</option>
+                            <option value="+353">+353 (Ireland)</option>
+                            <option value="+44">+44 (Isle of Man)</option>
+                            <option value="+972">+972 (Israel)</option>
+                            <option value="+39">+39 (Italy)</option>
+                            <option value="+1876">+1876 (Jamaica)</option>
+                            <option value="+81">+81 (Japan)</option>
+                            <option value="+44">+44 (Jersey)</option>
+                            <option value="+962">+962 (Jordan)</option>
+                            <option value="+7">+7 (Kazakhstan)</option>
+                            <option value="+254">+254 (Kenya)</option>
+                            <option value="+686">+686 (Kiribati)</option>
+                            <option value="+383">+383 (Kosovo)</option>
+                            <option value="+965">+965 (Kuwait)</option>
+                            <option value="+996">+996 (Kyrgyzstan)</option>
+                            <option value="+856">+856 (Laos)</option>
+                            <option value="+371">+371 (Latvia)</option>
+                            <option value="+961">+961 (Lebanon)</option>
+                            <option value="+266">+266 (Lesotho)</option>
+                            <option value="+231">+231 (Liberia)</option>
+                            <option value="+218">+218 (Libya)</option>
+                            <option value="+423">+423 (Liechtenstein)</option>
+                            <option value="+370">+370 (Lithuania)</option>
+                            <option value="+352">+352 (Luxembourg)</option>
+                            <option value="+853">+853 (Macau)</option>
+                            <option value="+389">+389 (North Macedonia)</option>
+                            <option value="+261">+261 (Madagascar)</option>
+                            <option value="+265">+265 (Malawi)</option>
+                            <option value="+60">+60 (Malaysia)</option>
+                            <option value="+960">+960 (Maldives)</option>
+                            <option value="+223">+223 (Mali)</option>
+                            <option value="+356">+356 (Malta)</option>
+                            <option value="+692">+692 (Marshall Islands)</option>
+                            <option value="+596">+596 (Martinique)</option>
+                            <option value="+222">+222 (Mauritania)</option>
+                            <option value="+230">+230 (Mauritius)</option>
+                            <option value="+262">+262 (Mayotte)</option>
+                            <option value="+52">+52 (Mexico)</option>
+                            <option value="+691">+691 (Micronesia)</option>
+                            <option value="+373">+373 (Moldova)</option>
+                            <option value="+377">+377 (Monaco)</option>
+                            <option value="+976">+976 (Mongolia)</option>
+                            <option value="+382">+382 (Montenegro)</option>
+                            <option value="+1664">+1664 (Montserrat)</option>
+                            <option value="+212">+212 (Morocco)</option>
+                            <option value="+258">+258 (Mozambique)</option>
+                            <option value="+95">+95 (Myanmar (Burma))</option>
+                            <option value="+264">+264 (Namibia)</option>
+                            <option value="+674">+674 (Nauru)</option>
+                            <option value="+977">+977 (Nepal)</option>
+                            <option value="+31">+31 (Netherlands)</option>
+                            <option value="+599">+599 (Caribbean Netherlands)</option>
+                            <option value="+687">+687 (New Caledonia)</option>
+                            <option value="+64">+64 (New Zealand)</option>
+                            <option value="+505">+505 (Nicaragua)</option>
+                            <option value="+227">+227 (Niger)</option>
+                            <option value="+234">+234 (Nigeria)</option>
+                            <option value="+683">+683 (Niue)</option>
+                            <option value="+672">+672 (Norfolk Island)</option>
+                            <option value="+850">+850 (North Korea)</option>
+                            <option value="+1670">+1670 (Northern Mariana Islands)</option>
+                            <option value="+47">+47 (Norway)</option>
+                            <option value="+968">+968 (Oman)</option>
+                            <option value="+92">+92 (Pakistan)</option>
+                            <option value="+680">+680 (Palau)</option>
+                            <option value="+970">+970 (Palestine)</option>
+                            <option value="+507">+507 (Panama)</option>
+                            <option value="+675">+675 (Papua New Guinea)</option>
+                            <option value="+595">+595 (Paraguay)</option>
+                            <option value="+51">+51 (Peru)</option>
+                            <option value="+63">+63 (Philippines)</option>
+                            <option value="+870">+870 (Pitcairn Islands)</option>
+                            <option value="+48">+48 (Poland)</option>
+                            <option value="+351">+351 (Portugal)</option>
+                            <option value="+1787">+1787 (Puerto Rico)</option>
+                            <option value="+974">+974 (Qatar)</option>
+                            <option value="+262">+262 (Réunion)</option>
+                            <option value="+40">+40 (Romania)</option>
+                            <option value="+7">+7 (Russia)</option>
+                            <option value="+250">+250 (Rwanda)</option>
+                            <option value="+685">+685 (Samoa)</option>
+                            <option value="+378">+378 (San Marino)</option>
+                            <option value="+239">+239 (São Tomé & Príncipe)</option>
+                            <option value="+966">+966 (Saudi Arabia)</option>
+                            <option value="+221">+221 (Senegal)</option>
+                            <option value="+381">+381 (Serbia)</option>
+                            <option value="+248">+248 (Seychelles)</option>
+                            <option value="+232">+232 (Sierra Leone)</option>
+                            <option value="+65">+65 (Singapore)</option>
+                            <option value="+1721">+1721 (Sint Maarten)</option>
+                            <option value="+421">+421 (Slovakia)</option>
+                            <option value="+386">+386 (Slovenia)</option>
+                            <option value="+677">+677 (Solomon Islands)</option>
+                            <option value="+252">+252 (Somalia)</option>
+                            <option value="+27">+27 (South Africa)</option>
+                            <option value="+82">+82 (South Korea)</option>
+                            <option value="+211">+211 (South Sudan)</option>
+                            <option value="+34">+34 (Spain)</option>
+                            <option value="+94">+94 (Sri Lanka)</option>
+                            <option value="+249">+249 (Sudan)</option>
+                            <option value="+597">+597 (Suriname)</option>
+                            <option value="+47">+47 (Svalbard & Jan Mayen)</option>
+                            <option value="+268">+268 (Eswatini)</option>
+                            <option value="+46">+46 (Sweden)</option>
+                            <option value="+41">+41 (Switzerland)</option>
+                            <option value="+963">+963 (Syria)</option>
+                            <option value="+886">+886 (Taiwan)</option>
+                            <option value="+992">+992 (Tajikistan)</option>
+                            <option value="+255">+255 (Tanzania)</option>
+                            <option value="+66">+66 (Thailand)</option>
+                            <option value="+670">+670 (Timor-Leste)</option>
+                            <option value="+228">+228 (Togo)</option>
+                            <option value="+690">+690 (Tokelau)</option>
+                            <option value="+676">+676 (Tonga)</option>
+                            <option value="+1868">+1868 (Trinidad & Tobago)</option>
+                            <option value="+216">+216 (Tunisia)</option>
+                            <option value="+90">+90 (Turkey)</option>
+                            <option value="+993">+993 (Turkmenistan)</option>
+                            <option value="+1649">+1649 (Turks & Caicos Islands)</option>
+                            <option value="+688">+688 (Tuvalu)</option>
+                            <option value="+256">+256 (Uganda)</option>
+                            <option value="+380">+380 (Ukraine)</option>
+                            <option value="+971">+971 (United Arab Emirates)</option>
+                            <option value="+44">+44 (United Kingdom)</option>
+                            <option value="+1">+1 (United States)</option>
+                            <option value="+598">+598 (Uruguay)</option>
+                            <option value="+998">+998 (Uzbekistan)</option>
+                            <option value="+678">+678 (Vanuatu)</option>
+                            <option value="+379">+379 (Vatican City)</option>
+                            <option value="+58">+58 (Venezuela)</option>
+                            <option value="+84">+84 (Vietnam)</option>
+                            <option value="+681">+681 (Wallis & Futuna)</option>
+                            <option value="+212">+212 (Western Sahara)</option>
+                            <option value="+967">+967 (Yemen)</option>
+                            <option value="+260">+260 (Zambia)</option>
+                            <option value="+263">+263 (Zimbabwe)</option>
+                        </select>
+                        <input type="tel" id="mobile-number" name="mobile-number" class="input-field-inner" placeholder="e.g., 9876543210" maxlength="10" required>
+                    </div>
+                    <button type="button" id="send-otp-button" class="w-full bg-sage-green text-white px-6 py-3 rounded-full text-lg font-semibold hover:bg-sage-green-dark transition-colors duration-300 shadow-md mt-4">
+                        Send OTP
+                    </button>
+                </div>
+                
+                <div id="otp-verification-section" class="hidden space-y-4">
+                    <label for="otp" class="block text-dark-grey text-sm font-medium mb-2">OTP</label>
+                    <div class="combined-input-box space-x-2">
+                        <input type="text" id="otp" name="otp" class="input-field-inner" placeholder="Enter OTP" maxlength="6">
+                        <button type="button" id="verify-otp-button" class="bg-sage-green text-white px-3 py-1.5 rounded-full text-sm hover:bg-sage-green-dark transition-colors duration-300 shadow-md">Verify OTP</button>
+                    </div>
+                    <p id="otp-verification-status" class="text-xs mt-2 text-center hidden"></p>
+                    <button type="button" id="resend-otp-button" class="w-full bg-gray-300 text-dark-grey px-6 py-3 rounded-full text-lg font-semibold hover:bg-gray-400 transition-colors duration-300 shadow-md">
+                        Resend OTP
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-6 text-center">
+                <p class="text-dark-grey">Remember your password? <a href="signin.html" class="text-sage-green hover:text-darker-sage-green font-medium">Sign In</a></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="bg-dark-grey text-off-white py-6 mt-auto rounded-t-lg">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2023 SmartBite. All rights reserved.</p>
+            <div class="flex justify-center space-x-4 mt-2">
+                <a href="#" class="hover:text-sage-green transition-colors duration-300">Privacy Policy</a>
+                <a href="#" class="hover:text-sage-green transition-colors duration-300">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Modal for Messages (replaces alert()) -->
+    <div id="custom-modal" class="fixed inset-0 bg-dark-grey bg-opacity-75 flex items-center justify-center hidden z-50">
+        <div class="bg-off-white p-6 rounded-lg shadow-xl text-center max-w-sm mx-auto">
+            <p id="modal-message" class="text-dark-grey text-lg mb-4"></p>
+            <button id="modal-close-button" class="bg-sage-green text-white px-4 py-2 rounded-full hover:bg-sage-green-dark transition-colors duration-300">OK</button>
+        </div>
+    </div>
+
+    <!-- JavaScript for Mobile Menu Toggle and Form Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile Menu Toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('active');
+                });
+            }
+
+            // Form Elements
+            const forgotPasswordForm = document.getElementById('forgot-password-form');
+            const mobileInputSection = document.getElementById('mobile-input-section'); // Section containing mobile input and send OTP button
+            const countryCodeSelect = document.getElementById('country-code');
+            const mobileNumberInput = document.getElementById('mobile-number');
+            const sendOtpButton = document.getElementById('send-otp-button'); // Renamed from sendResetButton
+            
+            const otpVerificationSection = document.getElementById('otp-verification-section'); // Section containing OTP input and verify/resend buttons
+            const otpInput = document.getElementById('otp');
+            const verifyOtpButton = document.getElementById('verify-otp-button');
+            const otpVerificationStatus = document.getElementById('otp-verification-status');
+            const resendOtpButton = document.getElementById('resend-otp-button'); // New: Resend OTP button
+
+            let correctOtp = '123456'; // Simulated OTP for demonstration
+            let isOtpSent = false;
+            let isOtpVerified = false;
+
+            // Function to show custom modal (replaces alert())
+            function showCustomModal(message) {
+                const modal = document.getElementById('custom-modal');
+                const modalMessage = document.getElementById('modal-message');
+                const modalCloseButton = document.getElementById('modal-close-button');
+
+                modalMessage.textContent = message;
+                modal.classList.remove('hidden');
+
+                modalCloseButton.onclick = () => {
+                    modal.classList.add('hidden');
+                };
+            }
+
+            // Function to handle sending OTP
+            function handleSendOtp() {
+                const mobileNumber = mobileNumberInput.value;
+                const countryCode = countryCodeSelect.value;
+
+                if (!mobileNumber) {
+                    showCustomModal('Please enter your mobile number.');
+                    return;
+                }
+                if (mobileNumber.length !== 10 || !/^\d{10}$/.test(mobileNumber)) {
+                    showCustomModal('Please enter a valid 10-digit mobile number.');
+                    return;
+                }
+
+                const fullMobileNumber = countryCode + mobileNumber;
+                
+                // Simulate sending OTP
+                showCustomModal(`OTP sent to ${fullMobileNumber}. (Simulated: ${correctOtp})`);
+                console.log('OTP sent to:', fullMobileNumber);
+
+                isOtpSent = true;
+                mobileNumberInput.setAttribute('readonly', 'true');
+                countryCodeSelect.setAttribute('disabled', 'true');
+                sendOtpButton.textContent = 'OTP Sent'; // Change button text
+                sendOtpButton.disabled = true; // Disable send OTP button after sending
+
+                otpVerificationSection.classList.remove('hidden'); // Show OTP input section
+                otpInput.value = ''; // Clear previous OTP
+                otpInput.removeAttribute('disabled');
+                verifyOtpButton.removeAttribute('disabled');
+                otpVerificationStatus.classList.add('hidden'); // Hide status message
+                otpVerificationStatus.classList.remove('text-green-600', 'text-red-600');
+            }
+
+            // Event listener for Send OTP button
+            sendOtpButton.addEventListener('click', handleSendOtp);
+            resendOtpButton.addEventListener('click', handleSendOtp); // Resend button also triggers send OTP logic
+
+            // Event listener for Verify OTP button
+            verifyOtpButton.addEventListener('click', function() {
+                const enteredOtp = otpInput.value;
+                if (!enteredOtp) {
+                    showCustomModal('Please enter the OTP.');
+                    return;
+                }
+                if (enteredOtp === correctOtp) {
+                    isOtpVerified = true;
+                    otpVerificationStatus.textContent = 'OTP Verified!';
+                    otpVerificationStatus.classList.remove('hidden', 'text-red-600');
+                    otpVerificationStatus.classList.add('text-green-600');
+                    showCustomModal('OTP Verified Successfully! Redirecting to password reset page...');
+
+                    // Disable OTP related fields after successful verification
+                    mobileNumberInput.setAttribute('readonly', 'true');
+                    countryCodeSelect.setAttribute('disabled', 'true');
+                    otpInput.setAttribute('disabled', 'true');
+                    sendOtpButton.setAttribute('disabled', 'true');
+                    verifyOtpButton.setAttribute('disabled', 'true');
+                    resendOtpButton.setAttribute('disabled', 'true');
+
+                    // Redirect to new password reset page
+                    // Pass mobile number as a query parameter or use local storage
+                    const fullMobileNumber = countryCodeSelect.value + mobileNumberInput.value;
+                    localStorage.setItem('smartbite_reset_mobile', fullMobileNumber); // Store for new page
+                    window.location.href = 'reset-password.html'; // Redirect to the new page
+
+                } else {
+                    isOtpVerified = false;
+                    otpVerificationStatus.textContent = 'Invalid OTP. Please try again.';
+                    otpVerificationStatus.classList.remove('hidden', 'text-green-600');
+                    otpVerificationStatus.classList.add('text-red-600');
+                    showCustomModal('Invalid OTP. Please try again.');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition Label Quiz - SmartBite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5DC;
+            color: #36454F;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+        }
+        h1 {
+            color: #8FBC8F;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .label {
+            background-color: #FCFCF4;
+            border: 2px solid #8FBC8F;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .option {
+            background-color: #E8F5E8;
+            border: 1px solid #8FBC8F;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin: 0.25rem;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .option:hover {
+            background-color: #7B9F7B;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nutrition Label Quiz</h1>
+    <p>Look at the nutrition label and answer the questions. Score points for correct answers!</p>
+    <div id="quiz-container">
+        <div class="label" id="label"></div>
+        <div id="question" class="mb-4"></div>
+        <div id="options" class="mb-4"></div>
+        <div id="result" class="mt-4"></div>
+        <button id="next-btn" class="mt-4 bg-green-500 text-white px-4 py-2 rounded hidden">Next Question</button>
+    </div>
+    <div id="score" class="mt-4">Score: 0</div>
+    <a href="{{ url_for('fitness_games') }}" class="text-sage-green hover:underline">Back to Fitness Games</a>
+
+    <script>
+        const questions = [
+            {
+                label: "Serving Size: 1 cup (240ml)<br>Calories: 150<br>Total Fat: 2g<br>Saturated Fat: 0g<br>Protein: 8g<br>Sugar: 25g",
+                question: "How many grams of sugar are in one serving?",
+                options: ["2g", "8g", "25g", "150g"],
+                answer: 2
+            },
+            {
+                label: "Serving Size: 100g<br>Calories: 250<br>Total Fat: 10g<br>Saturated Fat: 3g<br>Protein: 20g<br>Sugar: 5g",
+                question: "Which nutrient is highest in this product?",
+                options: ["Fat", "Protein", "Sugar", "Calories"],
+                answer: 1
+            },
+            {
+                label: "Serving Size: 2 slices<br>Calories: 200<br>Total Fat: 5g<br>Saturated Fat: 1g<br>Protein: 6g<br>Sugar: 10g",
+                question: "Is this a high-protein food?",
+                options: ["Yes", "No"],
+                answer: 1
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        const labelDiv = document.getElementById('label');
+        const questionDiv = document.getElementById('question');
+        const optionsDiv = document.getElementById('options');
+        const resultDiv = document.getElementById('result');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreDiv = document.getElementById('score');
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            labelDiv.innerHTML = `<h2>Nutrition Facts</h2><p>${q.label}</p>`;
+            questionDiv.innerHTML = `<h3>${q.question}</h3>`;
+            optionsDiv.innerHTML = '';
+            q.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                optionDiv.textContent = option;
+                optionDiv.addEventListener('click', () => checkAnswer(index));
+                optionsDiv.appendChild(optionDiv);
+            });
+            resultDiv.innerHTML = '';
+            nextBtn.classList.add('hidden');
+        }
+
+        function checkAnswer(selected) {
+            const q = questions[currentQuestion];
+            if (selected === q.answer) {
+                resultDiv.innerHTML = '<p class="text-green-600">Correct! +10 points</p>';
+                score += 10;
+            } else {
+                resultDiv.innerHTML = '<p class="text-red-600">Wrong! The correct answer is: ' + q.options[q.answer] + '</p>';
+            }
+            scoreDiv.textContent = `Score: ${score}`;
+            nextBtn.classList.remove('hidden');
+        }
+
+        nextBtn.addEventListener('click', () => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                resultDiv.innerHTML = '<p class="text-blue-600">Quiz complete! Your final score: ' + score + '</p>';
+                nextBtn.classList.add('hidden');
+            }
+        });
+
+        loadQuestion();
+    </script>
+</body>
+</html>

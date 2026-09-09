@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Repetition Counter Game{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
+  <h1 class="text-2xl font-bold mb-4">Repetition Counter Game</h1>
+  <p>Use manual input to count your push-ups, squats, or sit-ups.</p>
+
+  <div class="mt-6">
+    <label for="exercise" class="block font-semibold mb-2">Select Exercise:</label>
+    <select id="exercise" class="border rounded p-2 w-full">
+      <option value="pushups">Push-ups</option>
+      <option value="squats">Squats</option>
+      <option value="situps">Sit-ups</option>
+    </select>
+  </div>
+
+  <div class="mt-6">
+    <label for="count" class="block font-semibold mb-2">Repetitions Counted:</label>
+    <input type="number" id="count" class="border rounded p-2 w-full" min="0" value="0" />
+  </div>
+
+  <button id="submitBtn" class="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Submit</button>
+
+  <div id="message" class="mt-4 text-green-700 font-semibold"></div>
+</div>
+
+<script>
+  document.getElementById('submitBtn').addEventListener('click', () => {
+    const exercise = document.getElementById('exercise').value;
+    const count = parseInt(document.getElementById('count').value, 10);
+    if (isNaN(count) || count < 0) {
+      alert('Please enter a valid count.');
+      return;
+    }
+    // For demo, just show a message
+    document.getElementById('message').textContent = `You logged ${count} ${exercise}. Keep it up!`;
+    // TODO: Implement backend API call to save data and update leaderboard
+  });
+</script>
+{% endblock %}

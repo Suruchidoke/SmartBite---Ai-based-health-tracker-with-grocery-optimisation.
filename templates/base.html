@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartBite{% endblock %} - AI Health Tracker & Grocery Optimizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sage: {
+                            50: '#F4F7F4',
+                            100: '#E8EFE8',
+                            200: '#C8D9C8',
+                            300: '#A4C1A4',
+                            DEFAULT: '#4A7C59',
+                            dark: '#385F44',
+                            light: '#8FBC8F'
+                        },
+                        cream: {
+                            50: '#FDFBF7',
+                            DEFAULT: '#F7F3E9',
+                            dark: '#EBE3D3'
+                        },
+                        darkslate: '#22332A',
+                        terracotta: '#D96B43'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #F7F3E9;
+            color: #22332A;
+        }
+
+        .glass-nav {
+            background: rgba(253, 251, 247, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(220, 230, 220, 0.7);
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 0.85rem;
+            border-radius: 9999px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #3B5245;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: #22332A;
+            background-color: rgba(74, 124, 89, 0.1);
+        }
+
+        .nav-link.active {
+            background-color: #4A7C59;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(74, 124, 89, 0.3);
+        }
+
+        .nav-link i {
+            margin-right: 0.4rem;
+            font-size: 0.9rem;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Global Persistent Navigation Header -->
+    <header class="glass-nav sticky top-0 z-50 border-b border-green-900/10 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Brand / Logo -->
+                <a href="{{ url_for('dashboard') if session.get('username') else url_for('index') }}" class="flex items-center space-x-3 group">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sage to-sage-light flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform duration-200">
+                        <i class="fas fa-leaf text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-black text-sage tracking-tight">SmartBite</span>
+                        <span class="hidden sm:inline-block text-xs font-semibold uppercase tracking-wider text-sage-dark/60 bg-green-100/60 px-2 py-0.5 rounded-full ml-1">AI Health</span>
+                    </div>
+                </a>
+
+                <!-- Desktop Navigation Links (Authenticated) -->
+                {% if session.get('username') %}
+                <nav class="hidden md:flex items-center space-x-1 lg:space-x-2">
+                    <a href="{{ url_for('dashboard') }}" class="nav-link {{ 'active' if request.path == '/dashboard' else '' }}">
+                        <i class="fas fa-chart-pie"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('diet_plan') }}" class="nav-link {{ 'active' if '/diet' in request.path else '' }}">
+                        <i class="fas fa-utensils"></i> Diet Plan
+                    </a>
+                    <a href="{{ url_for('grocery') }}" class="nav-link {{ 'active' if '/grocery' in request.path else '' }}">
+                        <i class="fas fa-shopping-basket"></i> Grocery Optimizer
+                    </a>
+                    <a href="{{ url_for('fitness_games') }}" class="nav-link {{ 'active' if '/fitness' in request.path or 'streak' in request.path or 'quiz' in request.path else '' }}">
+                        <i class="fas fa-trophy"></i> Fitness & Games
+                    </a>
+                    <a href="{{ url_for('profile') }}" class="nav-link {{ 'active' if request.path == '/profile' else '' }}">
+                        <i class="fas fa-user-cog"></i> Profile
+                    </a>
+                </nav>
+                {% endif %}
+
+                <!-- Right Action Buttons -->
+                <div class="hidden md:flex items-center space-x-3">
+                    {% if session.get('username') %}
+                        <!-- BiteBot AI Quick Button -->
+                        <a href="{{ url_for('bitebot') }}" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors shadow-sm" title="AI Recipe Assistant">
+                            <i class="fas fa-robot text-sm"></i>
+                            <span>BiteBot AI</span>
+                        </a>
+
+                        <!-- User Pill & Logout -->
+                        <div class="flex items-center space-x-2 pl-2 border-l border-gray-300">
+                            <span class="text-xs text-gray-600 font-medium max-w-[120px] truncate" title="{{ session.username }}">
+                                {{ session.username.split('@')[0] }}
+                            </span>
+                            <a href="{{ url_for('logout') }}" class="text-xs px-3 py-1.5 rounded-full border border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 font-medium transition-colors" title="Sign out">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="text-sm font-semibold text-sage hover:text-sage-dark px-4 py-2">Sign In</a>
+                        <a href="{{ url_for('signup') }}" class="bg-sage text-white text-sm font-semibold px-5 py-2 rounded-full hover:bg-sage-dark transition shadow-sm">Get Started</a>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile Menu Hamburger Button -->
+                <button id="mobile-toggle-btn" class="md:hidden p-2 rounded-lg text-sage-dark hover:bg-sage/10 focus:outline-none" aria-label="Toggle Navigation">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Drawer Menu -->
+        <div id="mobile-drawer" class="hidden md:hidden border-t border-gray-200/80 bg-white/95 px-4 pt-3 pb-5 space-y-2 shadow-lg">
+            {% if session.get('username') %}
+                <div class="pb-2 mb-2 border-b border-gray-100 flex justify-between items-center text-xs text-gray-500">
+                    <span>Signed in as <strong>{{ session.username }}</strong></span>
+                    <a href="{{ url_for('logout') }}" class="text-red-600 font-semibold">Sign Out</a>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="flex items-center space-x-3 p-2.5 rounded-xl hover:bg-sage-50 text-darkslate font-medium text-sm">
+                    <i class="fas fa-chart-pie text-sage w-6"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('diet_plan') }}" class="flex items-center space-x-3 p-2.5 rounded-xl hover:bg-sage-50 text-darkslate font-medium text-sm">
+                    <i class="fas fa-utensils text-sage w-6"></i>
+                    <span>Diet Plan</span>
+                </a>
+                <a href="{{ url_for('grocery') }}" class="flex items-center space-x-3 p-2.5 rounded-xl hover:bg-sage-50 text-darkslate font-medium text-sm">
+                    <i class="fas fa-shopping-basket text-sage w-6"></i>
+                    <span>Grocery Optimizer</span>
+                </a>
+                <a href="{{ url_for('fitness_games') }}" class="flex items-center space-x-3 p-2.5 rounded-xl hover:bg-sage-50 text-darkslate font-medium text-sm">
+                    <i class="fas fa-trophy text-sage w-6"></i>
+                    <span>Fitness Challenges</span>
+                </a>
+                <a href="{{ url_for('profile') }}" class="flex items-center space-x-3 p-2.5 rounded-xl hover:bg-sage-50 text-darkslate font-medium text-sm">
+                    <i class="fas fa-user-cog text-sage w-6"></i>
+                    <span>Health & Cuisine Profile</span>
+                </a>
+                <a href="{{ url_for('bitebot') }}" class="flex items-center space-x-3 p-2.5 rounded-xl bg-emerald-50 text-emerald-800 font-medium text-sm">
+                    <i class="fas fa-robot text-emerald-600 w-6"></i>
+                    <span>Ask BiteBot AI</span>
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="block text-center py-2 text-sage font-semibold">Sign In</a>
+                <a href="{{ url_for('signup') }}" class="block text-center py-2.5 bg-sage text-white rounded-full font-semibold shadow">Sign Up</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="flex-grow">
+        <!-- Flash Notification Toaster -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="max-w-4xl mx-auto px-4 pt-4">
+                    {% for category, message in messages %}
+                        <div class="flex items-center justify-between p-4 mb-3 rounded-xl border shadow-sm transition-all duration-300 {{ 'bg-red-50 border-red-200 text-red-800' if category == 'error' else 'bg-green-50 border-green-200 text-green-800' if category == 'success' else 'bg-blue-50 border-blue-200 text-blue-800' }}">
+                            <div class="flex items-center space-x-2.5 text-sm font-medium">
+                                <i class="fas {{ 'fa-exclamation-circle text-red-500' if category == 'error' else 'fa-check-circle text-green-500' if category == 'success' else 'fa-info-circle text-blue-500' }}"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 p-1">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="bg-darkslate text-cream/70 py-8 border-t border-green-950/20 text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-sm text-cream tracking-tight">SmartBite</span>
+                <span>— AI Health Tracker & Multi-Cuisine Grocery Optimizer</span>
+            </div>
+            <div class="flex items-center space-x-6 text-cream/80">
+                <a href="{{ url_for('dashboard') }}" class="hover:text-white transition">Dashboard</a>
+                <a href="{{ url_for('diet_plan') }}" class="hover:text-white transition">Diet Plan</a>
+                <a href="{{ url_for('grocery') }}" class="hover:text-white transition">Grocery</a>
+                <a href="{{ url_for('profile') }}" class="hover:text-white transition">Cuisine Profile</a>
+            </div>
+            <div>&copy; 2026 SmartBite. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <!-- Mobile Drawer Toggle Script -->
+    <script>
+        const mobileToggleBtn = document.getElementById('mobile-toggle-btn');
+        const mobileDrawer = document.getElementById('mobile-drawer');
+        if (mobileToggleBtn && mobileDrawer) {
+            mobileToggleBtn.addEventListener('click', () => {
+                mobileDrawer.classList.toggle('hidden');
+            });
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Bitebot{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold text-dark-grey mb-8">Bitebot - Your AI Assistant</h1>
+    <div class="bg-off-white p-6 rounded-lg shadow-md">
+        <div id="chat" class="h-96 overflow-y-auto mb-4 p-4 border border-gray-300 rounded"></div>
+        <input type="text" id="message" class="w-full p-2 border border-gray-300 rounded" placeholder="Ask me anything about nutrition...">
+        <button id="send" class="mt-2 bg-sage-green text-white px-4 py-2 rounded hover:bg-sage-green-dark">Send</button>
+    </div>
+</div>
+<script>
+    // Simple chat script
+    const chat = document.getElementById('chat');
+    const messageInput = document.getElementById('message');
+    const sendButton = document.getElementById('send');
+
+    sendButton.addEventListener('click', () => {
+        const message = messageInput.value;
+        if (message) {
+            chat.innerHTML += `<p><strong>You:</strong> ${message}</p>`;
+            messageInput.value = '';
+            // Simulate response
+            setTimeout(() => {
+                chat.innerHTML += `<p><strong>Bitebot:</strong> That's a great question! I'm here to help with nutrition advice.</p>`;
+                chat.scrollTop = chat.scrollHeight;
+            }, 1000);
+        }
+    });
+</script>
+{% endblock %}

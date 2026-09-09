@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartBite - Recipe Detail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      --color-sage-green: #8FBC8F;
+      --color-beige: #F5F5DC;
+      --color-off-white: #FCFCF4;
+      --color-dark-grey: #36454F;
+      --color-darker-sage-green: #7B9F7B;
+      --color-dark-beige: #E0D8C4;
+    }
+    .bg-sage-green { background-color: var(--color-sage-green); }
+    .bg-beige { background-color: var(--color-beige); }
+    .bg-off-white { background-color: var(--color-off-white); }
+    .text-dark-grey { color: var(--color-dark-grey); }
+    .text-sage-green { color: var(--color-sage-green); }
+    .border-sage-green { border-color: var(--color-sage-green); }
+    .hover\:bg-sage-green-dark:hover { background-color: var(--color-darker-sage-green); }
+    .hover\:text-sage-green-dark:hover { color: var(--color-darker-sage-green); }
+    .container {
+      max-width: 600px;
+      margin: 2rem auto;
+      background-color: var(--color-off-white);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(2,6,23,0.06);
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--color-dark-grey);
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-sage-green);
+    }
+    ul, ol {
+      margin-left: 1.5rem;
+      color: var(--color-dark-grey);
+    }
+    a.back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: var(--color-sage-green);
+      font-weight: 600;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body class="bg-beige text-dark-grey min-h-screen">
+  <div class="container">
+    {% if error %}
+      <h1>Recipe Not Found</h1>
+      <p>{{ error }}</p>
+      <a href="{{ url_for('dashboard') }}" class="back-link">Back to Dashboard</a>
+    {% else %}
+      <h1>{{ recipe.name }}</h1>
+      <div><strong>Category:</strong> {{ recipe.Category or recipe.category or 'N/A' }}</div>
+      <div><strong>Calories:</strong> {{ recipe.calories or recipe.Energ_Kcal or 'N/A' }}</div>
+      <div><strong>Ingredients:</strong></div>
+      <ul>
+        {% if recipe.ingredients %}
+          {% for ingredient in recipe.ingredients if ingredient %}
+            <li>{{ ingredient }}</li>
+          {% endfor %}
+        {% else %}
+          <li>No ingredients listed.</li>
+        {% endif %}
+      </ul>
+      <div><strong>Steps:</strong></div>
+      <ol>
+        {% if recipe.steps %}
+          {% for step in recipe.steps if step %}
+            <li>{{ step }}</li>
+          {% endfor %}
+        {% else %}
+          <li>No steps provided.</li>
+        {% endif %}
+      </ol>
+      <a href="{{ url_for('dashboard') }}" class="back-link">Back to Dashboard</a>
+    {% endif %}
+  </div>
+</body>
+</html>

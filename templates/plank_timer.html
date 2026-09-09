@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Plank Timer Challenge{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
+  <h1 class="text-2xl font-bold mb-4">Plank Timer Challenge</h1>
+  <p>Hold your plank as long as you can. Longer holds = higher score.</p>
+
+  <div class="mt-6 text-center">
+    <div id="timer" class="text-6xl font-mono mb-4">00:00</div>
+    <button id="startBtn" class="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600">Start</button>
+    <button id="stopBtn" class="bg-red-500 text-white px-6 py-3 rounded hover:bg-red-600 ml-4" disabled>Stop</button>
+  </div>
+
+  <div id="result" class="mt-6 text-center text-green-700 font-semibold"></div>
+</div>
+
+<script>
+  let timerInterval;
+  let startTime;
+
+  const timerEl = document.getElementById('timer');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const resultEl = document.getElementById('result');
+
+  function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }
+
+  startBtn.addEventListener('click', () => {
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      timerEl.textContent = formatTime(elapsed);
+    }, 1000);
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    resultEl.textContent = '';
+  });
+
+  stopBtn.addEventListener('click', () => {
+    clearInterval(timerInterval);
+    const elapsed = Date.now() - startTime;
+    timerEl.textContent = formatTime(elapsed);
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    resultEl.textContent = `You held the plank for ${formatTime(elapsed)}! Great job!`;
+    // TODO: Save score and update streak badges via backend API
+  });
+</script>
+{% endblock %}

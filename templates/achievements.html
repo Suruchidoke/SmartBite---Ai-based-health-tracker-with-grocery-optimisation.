@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Achievements - SmartBite</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --color-sage-green: #8FBC8F;
+      --color-beige: #F5F5DC;
+      --color-off-white: #FCFCF4;
+      --color-dark-grey: #36454F;
+      --color-darker-sage-green: #7B9F7B;
+      --color-dark-beige: #E0D8C4;
+    }
+    .bg-sage-green { background-color: var(--color-sage-green); }
+    .bg-beige { background-color: var(--color-beige); }
+    .bg-off-white { background-color: var(--color-off-white); }
+    .bg-dark-beige { background-color: var(--color-dark-beige); }
+    .text-dark-grey { color: var(--color-dark-grey); }
+    .text-sage-green { color: var(--color-sage-green); }
+    .border-sage-green { border-color: var(--color-sage-green); }
+    .hover\:bg-sage-green-dark:hover { background-color: var(--color-darker-sage-green); }
+
+    .card {
+      background-color: var(--color-off-white);
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .header-icon-btn {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      transition: background-color 0.3s ease;
+    }
+    .header-icon-btn:hover {
+      background-color: rgba(143, 188, 143, 0.2);
+    }
+
+    .progress-bar {
+      background-color: #ddd;
+      border-radius: 20px;
+      overflow: hidden;
+      height: 20px;
+      margin: 10px 0 20px 0;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background-color: var(--color-sage-green);
+      width: 0%;
+      transition: width 1s ease-in-out;
+    }
+    .levels {
+      list-style: none;
+      padding: 0;
+    }
+    .level {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .level.unlocked {
+      background-color: #e0f7e9;
+      font-weight: bold;
+    }
+    .level .name {
+      font-size: 1.1em;
+    }
+    .level .description {
+      font-size: 0.9em;
+      color: #666;
+    }
+    .level .status {
+      font-size: 0.9em;
+      color: var(--color-sage-green);
+    }
+
+    /* Dark mode styles */
+    body.dark {
+      --color-sage-green: #9ACD32;
+      --color-beige: #2F2F2F;
+      --color-off-white: #1F1F1F;
+      --color-dark-grey: #E0E0E0;
+      --color-darker-sage-green: #7B9F7B;
+      --color-dark-beige: #3F3F3F;
+    }
+    body.dark .bg-beige { background-color: var(--color-beige); }
+    body.dark .bg-off-white { background-color: var(--color-off-white); }
+    body.dark .text-dark-grey { color: var(--color-dark-grey); }
+    body.dark .text-sage-green { color: var(--color-sage-green); }
+    body.dark .border-sage-green { border-color: var(--color-sage-green); }
+    body.dark .hover\:bg-sage-green-dark:hover { background-color: var(--color-darker-sage-green); }
+    body.dark .card {
+      background-color: var(--color-off-white);
+      border: 1px solid #444;
+    }
+  </style>
+</head>
+<body class="bg-beige text-dark-grey min-h-screen flex flex-col">
+
+  <!-- Header Section -->
+  <header class="bg-off-white shadow-md py-4 sticky top-0 z-50 rounded-b-lg">
+    <div class="container mx-auto px-4 flex justify-between items-center relative">
+      <div class="flex flex-col md:flex-row items-baseline justify-center w-full">
+        <span class="text-3xl font-bold text-sage-green mr-2">SmartBite</span>
+        <span class="text-lg font-medium text-dark-grey">Achievements</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="dark-mode-toggle" class="header-icon-btn text-sage-green focus:outline-none" title="Toggle Dark Mode">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="p-1 rounded-full border border-sage-green" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"></path>
+          </svg>
+        </button>
+        <button id="logout-btn" class="bg-sage-green text-white px-6 py-2 rounded-full hover:bg-sage-green-dark transition-colors duration-300 shadow-md">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto p-4 md:p-8">
+    <div class="max-w-2xl mx-auto">
+      <div class="card">
+        <h1 class="text-2xl font-bold text-sage-green mb-6 text-center">Your Achievements</h1>
+        <div class="text-center mb-6">
+          <h2 class="text-xl font-semibold text-dark-grey">Rank: <span id="rank" class="text-sage-green">Loading...</span></h2>
+          <h3 class="text-lg text-dark-grey">Score: <span id="score">Loading...</span></h3>
+          <div class="progress-bar mt-4" title="Progress to next level">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+          </div>
+          <div class="text-sm text-dark-grey mt-2">Next Level: <span id="next-level">Loading...</span></div>
+        </div>
+        <ul class="levels space-y-2" id="levels-list">
+          <!-- Levels will be populated here -->
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-dark-grey text-off-white py-6 mt-auto rounded-t-lg">
+    <div class="container mx-auto px-4 text-center">
+      <p>&copy; 2025 SmartBite. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div id="custom-modal" class="fixed inset-0 bg-dark-grey bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-off-white p-6 rounded-lg shadow-xl text-center max-w-sm mx-auto">
+      <p id="modal-message" class="text-dark-grey text-lg mb-4"></p>
+      <button id="modal-close-button" class="bg-sage-green text-white px-4 py-2 rounded-full hover:bg-sage-green-dark transition-colors duration-300">OK</button>
+    </div>
+  </div>
+
+    <script>
+        function showCustomModal(message) {
+          const customModal = document.getElementById('custom-modal');
+          const modalMessage = document.getElementById('modal-message');
+          modalMessage.textContent = message;
+          customModal.classList.remove('hidden');
+        }
+
+        document.getElementById('modal-close-button').addEventListener('click', () => {
+          document.getElementById('custom-modal').classList.add('hidden');
+        });
+
+        async function fetchAchievements() {
+            try {
+                const response = await fetch(`/api/achievements/{{ user }}`);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch achievements data");
+                }
+                const data = await response.json();
+
+                document.getElementById("rank").textContent = data.rank;
+                document.getElementById("score").textContent = data.score;
+                document.getElementById("next-level").textContent = data.next_level;
+
+                const progressBarFill = document.getElementById("progress-bar-fill");
+                progressBarFill.style.width = data.progress + "%";
+
+                const levelsList = document.getElementById("levels-list");
+                levelsList.innerHTML = "";
+                data.levels.forEach(level => {
+                    const li = document.createElement("li");
+                    li.className = "level" + (level.unlocked ? " unlocked" : "");
+                    li.innerHTML = `
+                        <div class="name">${level.name}</div>
+                        <div class="description">${level.description}</div>
+                        <div class="status">${level.unlocked ? "Unlocked" : "Locked"}</div>
+                    `;
+                    levelsList.appendChild(li);
+                });
+            } catch (error) {
+                console.error(error);
+                showCustomModal('Failed to load achievements data. Please try again later.');
+                document.getElementById("rank").textContent = "Error loading data";
+                document.getElementById("score").textContent = "-";
+                document.getElementById("next-level").textContent = "-";
+            }
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+          window.location.href = '/logout';
+        });
+
+        // Dark mode toggle
+        document.getElementById('dark-mode-toggle').addEventListener('click', () => {
+          document.body.classList.toggle('dark');
+        });
+
+        window.onload = fetchAchievements;
+    </script>
+</body>
+</html>

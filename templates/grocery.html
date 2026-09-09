@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Grocery Optimizer - SmartBite{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+    <!-- Hero Header -->
+    <div class="glass-card bg-white/95 rounded-3xl p-6 sm:p-8 shadow-sm mb-8 border border-green-900/10">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <div class="inline-flex items-center space-x-2 bg-sage/10 text-sage px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+                    <i class="fas fa-shopping-basket"></i>
+                    <span>Automated Smart Grocery Optimizer</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-black text-darkslate tracking-tight">
+                    Smart Grocery & Pantry Optimizer
+                </h1>
+                <p class="text-gray-600 text-sm mt-1 max-w-2xl">
+                    Consolidates all ingredients from your multi-cuisine diet plan, prevents overbuying, and lets you check off pantry staples you already have at home.
+                </p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="{{ url_for('diet_plan') }}" class="inline-flex items-center space-x-2 text-xs font-bold px-4 py-2.5 rounded-xl border border-gray-300 hover:border-sage text-darkslate bg-white shadow-sm transition">
+                    <i class="fas fa-utensils text-sage"></i>
+                    <span>Back to Diet Plan</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Layout: 2 Columns -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left: Smart Optimizer List (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Summary Stats Card -->
+            <div class="bg-gradient-to-r from-sage to-sage-dark text-white rounded-3xl p-6 shadow-md border border-white/20">
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                        <div class="text-xs text-emerald-100 font-semibold uppercase tracking-wider">To Buy</div>
+                        <div class="text-2xl sm:text-3xl font-extrabold mt-1" id="stat-shopping-count">0</div>
+                    </div>
+                    <div class="border-x border-white/20">
+                        <div class="text-xs text-emerald-100 font-semibold uppercase tracking-wider">In Pantry</div>
+                        <div class="text-2xl sm:text-3xl font-extrabold mt-1" id="stat-pantry-count">0</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-emerald-100 font-semibold uppercase tracking-wider">Est. Cost</div>
+                        <div class="text-2xl sm:text-3xl font-extrabold mt-1" id="stat-est-cost">₹0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Shopping Checklist -->
+            <div class="glass-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-8 h-8 rounded-full bg-sage/15 text-sage flex items-center justify-center font-bold text-sm">
+                            <i class="fas fa-list-check"></i>
+                        </span>
+                        <div>
+                            <h2 class="text-base font-bold text-darkslate">Shopping Checklist (From Diet Plan)</h2>
+                            <p class="text-xs text-gray-500">Check off items as you buy, or click "In Pantry" to deduct from your shopping bill.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shopping Items List -->
+                <ul id="shopping-list" class="space-y-2.5">
+                    <li class="text-center py-8 text-gray-400 text-xs">
+                        <i class="fas fa-spinner fa-spin text-lg mb-2 block"></i>
+                        Loading grocery list...
+                    </li>
+                </ul>
+
+                <!-- Manual Item Addition -->
+                <form id="add-manual-item-form" class="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+                    <input type="text" id="manual-item-input" placeholder="Add custom item (e.g. Almond Milk, Chia Seeds)..." 
+                           class="flex-1 px-4 py-2 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-sage focus:border-sage">
+                    <button type="submit" class="bg-sage hover:bg-sage-dark text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm">
+                        <i class="fas fa-plus mr-1"></i> Add
+                    </button>
+                </form>
+            </div>
+
+            <!-- Pantry / Already Own Card -->
+            <div class="glass-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-sm">
+                            <i class="fas fa-boxes-stacked"></i>
+                        </span>
+                        <div>
+                            <h2 class="text-base font-bold text-darkslate">My Pantry (Already Have at Home)</h2>
+                            <p class="text-xs text-gray-500">Items you own that SmartBite excludes from your shopping bill.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <ul id="pantry-list" class="space-y-2">
+                    <li class="text-gray-400 text-xs text-center py-4">No pantry items logged yet.</li>
+                </ul>
+            </div>
+
+        </div>
+
+        <!-- Right: Store Catalog & Search (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="glass-card bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div class="flex items-center space-x-2 mb-4 pb-3 border-b border-gray-100">
+                    <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+                        <i class="fas fa-store"></i>
+                    </span>
+                    <div>
+                        <h2 class="text-base font-bold text-darkslate">Grocery Catalog (25,000+ Items)</h2>
+                        <p class="text-xs text-gray-500">Search healthy grocery staples and OpenFoodFacts items.</p>
+                    </div>
+                </div>
+
+                <!-- Search Input -->
+                <div class="mb-4">
+                    <div class="relative">
+                        <input type="text" id="grocerySearch" placeholder="Search products (e.g. Oats, Dal, Olive Oil)..." 
+                               class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-sage focus:border-sage">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+                    </div>
+                    <div id="searchSuggestions" class="mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-40 overflow-y-auto hidden text-xs"></div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                    <button class="catalog-cat-btn active text-[11px] px-2.5 py-1 rounded-full font-bold bg-sage text-white transition" data-category="all">All</button>
+                    <button class="catalog-cat-btn text-[11px] px-2.5 py-1 rounded-full font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-category="Grains & Pulses">Grains & Pulses</button>
+                    <button class="catalog-cat-btn text-[11px] px-2.5 py-1 rounded-full font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-category="Dairy & Eggs">Dairy & Eggs</button>
+                    <button class="catalog-cat-btn text-[11px] px-2.5 py-1 rounded-full font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-category="Nuts & Seeds">Nuts & Seeds</button>
+                    <button class="catalog-cat-btn text-[11px] px-2.5 py-1 rounded-full font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition" data-category="Breakfast">Breakfast</button>
+                </div>
+
+                <!-- Products Display Area -->
+                <div id="products-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+                    <div class="text-center py-6 text-gray-400 text-xs">
+                        <i class="fas fa-spinner fa-spin mr-1"></i> Loading catalog items...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const userId = "{{ user }}";
+    let allProducts = [];
+    let currentCategory = 'all';
+
+    // 1. Load User's Grocery & Pantry Data
+    async function loadGroceryData() {
+        try {
+            const response = await fetch(`/api/dashboard/${encodeURIComponent(userId)}`);
+            if (response.ok) {
+                const data = await response.json();
+                const shopping = (data.groceryData && data.groceryData.shoppingList) || [];
+                const pantry = (data.groceryData && data.groceryData.pantry) || [];
+
+                updateShoppingList(shopping);
+                updatePantryList(pantry);
+                updateStats(shopping, pantry);
+            }
+        } catch (err) {
+            console.error('Error loading grocery data:', err);
+        }
+    }
+
+    function updateShoppingList(shopping) {
+        const list = document.getElementById('shopping-list');
+        if (!shopping || shopping.length === 0) {
+            list.innerHTML = `
+                <li class="text-center py-8 text-gray-400 text-xs bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                    <i class="fas fa-shopping-basket text-2xl text-gray-300 mb-2 block"></i>
+                    No items in your shopping list yet.<br>
+                    <a href="{{ url_for('diet_plan') }}" class="text-sage font-bold underline mt-1 inline-block">Go to Diet Plan</a> and click "Push to Grocery Optimizer"!
+                </li>`;
+            return;
+        }
+
+        list.innerHTML = shopping.map(item => `
+            <li class="flex items-center justify-between p-3 rounded-2xl bg-cream/40 border border-green-900/5 hover:bg-white transition group">
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox" class="w-4 h-4 text-sage rounded focus:ring-sage border-gray-300 cursor-pointer" onchange="toggleItemBought(this, '${escapeHtml(item)}')">
+                    <span class="text-xs font-semibold text-darkslate item-text">${escapeHtml(item)}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="moveToPantry('${escapeHtml(item)}')" class="text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg transition" title="Already have this at home? Move to Pantry to deduct from bill">
+                        <i class="fas fa-box-archive mr-0.5"></i> In Pantry
+                    </button>
+                    <button onclick="removeFromShopping('${escapeHtml(item)}')" class="text-gray-400 hover:text-red-500 p-1 transition" title="Remove item">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </li>
+        `).join('');
+    }
+
+    function updatePantryList(pantry) {
+        const list = document.getElementById('pantry-list');
+        if (!pantry || pantry.length === 0) {
+            list.innerHTML = `<li class="text-gray-400 text-xs text-center py-4">No pantry items logged yet.</li>`;
+            return;
+        }
+
+        list.innerHTML = pantry.map(item => `
+            <li class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100 text-xs">
+                <span class="font-medium text-gray-700 flex items-center">
+                    <i class="fas fa-check text-emerald-500 mr-2 text-[10px]"></i>
+                    ${escapeHtml(item)}
+                </span>
+                <div class="flex items-center space-x-2">
+                    <button onclick="moveToShopping('${escapeHtml(item)}')" class="text-[10px] font-bold text-sage hover:underline" title="Ran out? Move back to shopping list">
+                        Move to Buy
+                    </button>
+                    <button onclick="removeFromPantry('${escapeHtml(item)}')" class="text-gray-400 hover:text-red-500">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+            </li>
+        `).join('');
+    }
+
+    function updateStats(shopping, pantry) {
+        document.getElementById('stat-shopping-count').innerText = shopping.length;
+        document.getElementById('stat-pantry-count').innerText = pantry.length;
+        // Estimate ~₹45 average per staple item
+        const estimatedCost = shopping.length * 45;
+        document.getElementById('stat-est-cost').innerText = '₹' + estimatedCost.toLocaleString();
+    }
+
+    // 2. Load Products Catalog
+    async function loadProducts() {
+        try {
+            const res = await fetch('/api/grocery/products?page=1&limit=25');
+            if (res.ok) {
+                const data = await res.json();
+                allProducts = data.products || [];
+                renderProducts(allProducts);
+            }
+        } catch (err) {
+            console.error('Error loading products:', err);
+            document.getElementById('products-container').innerHTML = `
+                <div class="text-center py-6 text-gray-400 text-xs">Could not load catalog.</div>`;
+        }
+    }
+
+    function renderProducts(products) {
+        const container = document.getElementById('products-container');
+        if (!products || products.length === 0) {
+            container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">No matching products found.</div>`;
+            return;
+        }
+
+        container.innerHTML = products.map(prod => `
+            <div class="p-3 rounded-2xl border border-gray-100 hover:border-sage/40 bg-white transition flex items-center justify-between gap-3 shadow-2xs">
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-xs font-bold text-darkslate truncate">${escapeHtml(prod.name)}</h4>
+                    <div class="text-[10px] text-gray-500 mt-0.5 flex items-center space-x-2">
+                        <span>${escapeHtml(prod.category || 'Grocery')}</span>
+                        <span>•</span>
+                        <span class="font-bold text-sage-dark">₹${prod.price || 40}</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-1.5 shrink-0">
+                    <button onclick="addToShopping('${escapeHtml(prod.name)}')" class="bg-sage hover:bg-sage-dark text-white px-2.5 py-1 rounded-lg text-[11px] font-bold transition" title="Add to Shopping List">
+                        + Cart
+                    </button>
+                    <button onclick="addToPantry('${escapeHtml(prod.name)}')" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded-lg text-[11px] font-bold transition" title="Add to Pantry">
+                        + Pantry
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Category filter in catalog
+    document.querySelectorAll('.catalog-cat-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.catalog-cat-btn').forEach(b => {
+                b.classList.remove('active', 'bg-sage', 'text-white');
+                b.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            this.classList.add('active', 'bg-sage', 'text-white');
+            this.classList.remove('bg-gray-100', 'text-gray-700');
+
+            const cat = this.dataset.category;
+            currentCategory = cat;
+            if (cat === 'all') {
+                renderProducts(allProducts);
+            } else {
+                const filtered = allProducts.filter(p => (p.category || '').toLowerCase().includes(cat.toLowerCase()));
+                renderProducts(filtered);
+            }
+        });
+    });
+
+    // Catalog Search
+    document.getElementById('grocerySearch').addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        if (!q) {
+            renderProducts(allProducts);
+            return;
+        }
+        const filtered = allProducts.filter(p => 
+            p.name.toLowerCase().includes(q) || 
+            (p.category || '').toLowerCase().includes(q)
+        );
+        renderProducts(filtered);
+    });
+
+    // Actions
+    async function addToShopping(item) {
+        await fetch(`/api/grocery/${encodeURIComponent(userId)}/shopping/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ item })
+        });
+        loadGroceryData();
+    }
+
+    async function removeFromShopping(item) {
+        await fetch(`/api/grocery/${encodeURIComponent(userId)}/shopping/remove`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ item })
+        });
+        loadGroceryData();
+    }
+
+    async function addToPantry(item) {
+        await fetch(`/api/grocery/${encodeURIComponent(userId)}/pantry/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ item })
+        });
+        loadGroceryData();
+    }
+
+    async function removeFromPantry(item) {
+        await fetch(`/api/grocery/${encodeURIComponent(userId)}/pantry/remove`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ item })
+        });
+        loadGroceryData();
+    }
+
+    async function moveToPantry(item) {
+        await removeFromShopping(item);
+        await addToPantry(item);
+    }
+
+    async function moveToShopping(item) {
+        await removeFromPantry(item);
+        await addToShopping(item);
+    }
+
+    function toggleItemBought(checkbox, item) {
+        const textSpan = checkbox.parentElement.querySelector('.item-text');
+        if (checkbox.checked) {
+            textSpan.classList.add('line-through', 'text-gray-400');
+        } else {
+            textSpan.classList.remove('line-through', 'text-gray-400');
+        }
+    }
+
+    // Manual item form
+    document.getElementById('add-manual-item-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const input = document.getElementById('manual-item-input');
+        const item = input.value.trim();
+        if (item) {
+            await addToShopping(item);
+            input.value = '';
+        }
+    });
+
+    function escapeHtml(text) {
+        return (text || '').replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+        });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadGroceryData();
+        loadProducts();
+    });
+</script>
+{% endblock %}
