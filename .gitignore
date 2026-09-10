@@ -20,9 +20,12 @@ smartbite.db
 scratch/
 *.log
 
-# Environment variables & secrets
+# Environment variables & secrets (Never commit real API keys)
 .env
-.env.*
+.env.local
+.env.development
+.env.production
+!.env.example
 instance/
 
 # IDE & OS files

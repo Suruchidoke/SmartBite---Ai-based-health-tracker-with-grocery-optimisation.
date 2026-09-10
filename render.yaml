@@ -1,0 +1,21 @@
+﻿services:
+  - type: web
+    name: smartbite
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SMARTBITE_SECRET_KEY
+        generateValue: true
+      - key: SMARTBITE_JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: MONGO_DB
+        value: auto_diet_db
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash

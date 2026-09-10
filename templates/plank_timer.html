@@ -1,19 +1,24 @@
 {% extends "base.html" %}
 
-{% block title %}Plank Timer Challenge{% endblock %}
+{% block title %}Plank Timer Challenge — SmartBite{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-md">
-  <h1 class="text-2xl font-bold mb-4">Plank Timer Challenge</h1>
-  <p>Hold your plank as long as you can. Longer holds = higher score.</p>
+<div class="max-w-3xl mx-auto p-6 bg-white rounded-2xl shadow-md border border-gray-100">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl font-bold text-gray-800">⏱️ Plank Timer Challenge</h1>
+    <a href="{{ url_for('fitness_games') }}" class="text-sm text-emerald-600 hover:underline">← Back to Hub</a>
+  </div>
+  <p class="text-gray-600">Hold your plank with proper form as long as you can. Points are awarded based on total duration and automatically saved to your achievements.</p>
 
-  <div class="mt-6 text-center">
-    <div id="timer" class="text-6xl font-mono mb-4">00:00</div>
-    <button id="startBtn" class="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600">Start</button>
-    <button id="stopBtn" class="bg-red-500 text-white px-6 py-3 rounded hover:bg-red-600 ml-4" disabled>Stop</button>
+  <div class="my-8 text-center bg-gray-50 p-8 rounded-2xl border border-gray-200">
+    <div id="timer" class="text-6xl font-mono font-bold text-emerald-700 mb-6">00:00</div>
+    <div class="flex justify-center gap-4">
+      <button id="startBtn" class="bg-emerald-600 text-white font-medium px-8 py-3 rounded-xl hover:bg-emerald-700 shadow transition">Start Hold</button>
+      <button id="stopBtn" class="bg-red-500 text-white font-medium px-8 py-3 rounded-xl hover:bg-red-600 shadow transition" disabled>Stop & Save</button>
+    </div>
   </div>
 
-  <div id="result" class="mt-6 text-center text-green-700 font-semibold"></div>
+  <div id="result" class="text-center font-semibold text-gray-800 transition"></div>
 </div>
 
 <script>
@@ -40,17 +45,38 @@
     }, 1000);
     startBtn.disabled = true;
     stopBtn.disabled = false;
-    resultEl.textContent = '';
+    resultEl.innerHTML = '<span class="text-emerald-600">Hold strong! Keep your core tight.</span>';
   });
 
-  stopBtn.addEventListener('click', () => {
+  stopBtn.addEventListener('click', async () => {
     clearInterval(timerInterval);
     const elapsed = Date.now() - startTime;
+    const seconds = Math.floor(elapsed / 1000);
     timerEl.textContent = formatTime(elapsed);
     startBtn.disabled = false;
     stopBtn.disabled = true;
-    resultEl.textContent = `You held the plank for ${formatTime(elapsed)}! Great job!`;
-    // TODO: Save score and update streak badges via backend API
+
+    // Calculate score (1 pt per second, bonus for >60s)
+    const score = seconds > 60 ? seconds + 25 : seconds;
+    resultEl.innerHTML = `<span class="text-emerald-700">🎉 You held the plank for <strong>${formatTime(elapsed)}</strong>! Saving ${score} points...</span>`;
+
+    try {
+      const res = await fetch('/api/quiz/save-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quiz_type: 'plank_timer',
+          score: score,
+          max_score: 120
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        resultEl.innerHTML = `<span class="text-emerald-700">🏆 Great job! Held for <strong>${formatTime(elapsed)}</strong>. Earned <strong>+${score} points</strong> (Total Score: ${data.total_score}). Saved to your dashboard!</span>`;
+      }
+    } catch (e) {
+      resultEl.innerHTML = `<span class="text-emerald-700">Held for ${formatTime(elapsed)}! (Offline score noted)</span>`;
+    }
   });
 </script>
 {% endblock %}

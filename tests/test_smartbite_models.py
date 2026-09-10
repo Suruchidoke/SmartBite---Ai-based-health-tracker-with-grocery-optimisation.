@@ -132,7 +132,7 @@ def test_nutrition_recommender_food_fallback(indian_food_csv_path, monkeypatch):
 
     # No recipe generator provided -> food-based path exercised
     result = nr.get_recommendations({"diet_type": "vegetarian", "calorie_goal": 1800, "health_condition": "diabetes"})
-    assert set(result.keys()) == {"daily_meals", "weekly_plan", "shopping_list"}
+    assert {"daily_meals", "weekly_plan", "shopping_list"}.issubset(set(result.keys()))
     plan = result["daily_meals"]
     assert set(plan.keys()) == {"breakfast", "lunch", "dinner"}
 

@@ -188,6 +188,10 @@ class UserProgressPredictor:
         """Prepare features for training"""
         data = df.copy()
 
+        # Compute BMI if missing
+        if "bmi" not in data.columns and "weight" in data.columns and "height" in data.columns:
+            data["bmi"] = data["weight"] / ((data["height"] / 100) ** 2)
+
         # Encode categorical variables
         le_gender = LabelEncoder()
         le_activity = LabelEncoder()
