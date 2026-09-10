@@ -155,8 +155,26 @@
 {% block scripts %}
 <script>
     const userId = "{{ user }}";
+    const initialShopping = {{ shopping_list | tojson | safe }};
+    const initialPantry = {{ pantry | tojson | safe }};
     let allProducts = [];
     let currentCategory = 'all';
+
+    function getItemName(item) {
+        if (!item) return '';
+        if (typeof item === 'string') return item;
+        if (typeof item === 'object') {
+            return item.name || item.item || '';
+        }
+        return String(item);
+    }
+
+    function escapeHtml(text) {
+        const str = getItemName(text);
+        return str.replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+        });
+    }
 
     // 1. Load User's Grocery & Pantry Data
     async function loadGroceryData() {
@@ -170,10 +188,14 @@
                 updateShoppingList(shopping);
                 updatePantryList(pantry);
                 updateStats(shopping, pantry);
+                return;
             }
         } catch (err) {
             console.error('Error loading grocery data:', err);
         }
+        updateShoppingList(initialShopping);
+        updatePantryList(initialPantry);
+        updateStats(initialShopping, initialPantry);
     }
 
     function updateShoppingList(shopping) {
@@ -188,22 +210,28 @@
             return;
         }
 
-        list.innerHTML = shopping.map(item => `
+        list.innerHTML = shopping.map(rawItem => {
+            const name = getItemName(rawItem);
+            const safeName = escapeHtml(name);
+            const rawCat = (typeof rawItem === 'object' && rawItem.category) ? rawItem.category : 'Staples';
+            const safeCat = escapeHtml(rawCat);
+            return `
             <li class="flex items-center justify-between p-3 rounded-2xl bg-cream/40 border border-green-900/5 hover:bg-white transition group">
                 <div class="flex items-center space-x-3">
-                    <input type="checkbox" class="w-4 h-4 text-sage rounded focus:ring-sage border-gray-300 cursor-pointer" onchange="toggleItemBought(this, '${escapeHtml(item)}')">
-                    <span class="text-xs font-semibold text-darkslate item-text">${escapeHtml(item)}</span>
+                    <input type="checkbox" class="w-4 h-4 text-sage rounded focus:ring-sage border-gray-300 cursor-pointer" onchange="toggleItemBought(this, '${safeName}')">
+                    <span class="text-xs font-semibold text-darkslate item-text">${safeName}</span>
+                    <span class="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">${safeCat}</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <button onclick="moveToPantry('${escapeHtml(item)}')" class="text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg transition" title="Already have this at home? Move to Pantry to deduct from bill">
+                    <button onclick="moveToPantry('${safeName}')" class="text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg transition" title="Already have this at home? Move to Pantry to deduct from bill">
                         <i class="fas fa-box-archive mr-0.5"></i> In Pantry
                     </button>
-                    <button onclick="removeFromShopping('${escapeHtml(item)}')" class="text-gray-400 hover:text-red-500 p-1 transition" title="Remove item">
+                    <button onclick="removeFromShopping('${safeName}')" class="text-gray-400 hover:text-red-500 p-1 transition" title="Remove item">
                         <i class="fas fa-trash text-xs"></i>
                     </button>
                 </div>
-            </li>
-        `).join('');
+            </li>`;
+        }).join('');
     }
 
     function updatePantryList(pantry) {
@@ -213,29 +241,31 @@
             return;
         }
 
-        list.innerHTML = pantry.map(item => `
+        list.innerHTML = pantry.map(rawItem => {
+            const name = getItemName(rawItem);
+            const safeName = escapeHtml(name);
+            return `
             <li class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50 border border-gray-100 text-xs">
                 <span class="font-medium text-gray-700 flex items-center">
                     <i class="fas fa-check text-emerald-500 mr-2 text-[10px]"></i>
-                    ${escapeHtml(item)}
+                    ${safeName}
                 </span>
                 <div class="flex items-center space-x-2">
-                    <button onclick="moveToShopping('${escapeHtml(item)}')" class="text-[10px] font-bold text-sage hover:underline" title="Ran out? Move back to shopping list">
+                    <button onclick="moveToShopping('${safeName}')" class="text-[10px] font-bold text-sage hover:underline" title="Ran out? Move back to shopping list">
                         Move to Buy
                     </button>
-                    <button onclick="removeFromPantry('${escapeHtml(item)}')" class="text-gray-400 hover:text-red-500">
+                    <button onclick="removeFromPantry('${safeName}')" class="text-gray-400 hover:text-red-500">
                         <i class="fas fa-times text-xs"></i>
                     </button>
                 </div>
-            </li>
-        `).join('');
+            </li>`;
+        }).join('');
     }
 
     function updateStats(shopping, pantry) {
-        document.getElementById('stat-shopping-count').innerText = shopping.length;
-        document.getElementById('stat-pantry-count').innerText = pantry.length;
-        // Estimate ~₹45 average per staple item
-        const estimatedCost = shopping.length * 45;
+        document.getElementById('stat-shopping-count').innerText = (shopping || []).length;
+        document.getElementById('stat-pantry-count').innerText = (pantry || []).length;
+        const estimatedCost = (shopping || []).length * 45;
         document.getElementById('stat-est-cost').innerText = '₹' + estimatedCost.toLocaleString();
     }
 
@@ -321,49 +351,79 @@
 
     // Actions
     async function addToShopping(item) {
+        const name = getItemName(item);
+        if (!name) return;
         await fetch(`/api/grocery/${encodeURIComponent(userId)}/shopping/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ item })
+            body: JSON.stringify({ item: name, name: name })
         });
-        loadGroceryData();
+        await loadGroceryData();
     }
 
     async function removeFromShopping(item) {
+        const name = getItemName(item);
+        if (!name) return;
         await fetch(`/api/grocery/${encodeURIComponent(userId)}/shopping/remove`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ item })
+            body: JSON.stringify({ item: name, name: name })
         });
-        loadGroceryData();
+        await loadGroceryData();
     }
 
     async function addToPantry(item) {
+        const name = getItemName(item);
+        if (!name) return;
         await fetch(`/api/grocery/${encodeURIComponent(userId)}/pantry/add`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ item })
+            body: JSON.stringify({ item: name, name: name })
         });
-        loadGroceryData();
+        await loadGroceryData();
     }
 
     async function removeFromPantry(item) {
+        const name = getItemName(item);
+        if (!name) return;
         await fetch(`/api/grocery/${encodeURIComponent(userId)}/pantry/remove`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ item })
+            body: JSON.stringify({ item: name, name: name })
         });
-        loadGroceryData();
+        await loadGroceryData();
     }
 
     async function moveToPantry(item) {
-        await removeFromShopping(item);
-        await addToPantry(item);
+        const name = getItemName(item);
+        if (!name) return;
+        try {
+            await fetch(`/api/grocery/${encodeURIComponent(userId)}/move`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, from: 'shopping', to: 'pantry' })
+            });
+        } catch (e) {
+            await removeFromShopping(name);
+            await addToPantry(name);
+        }
+        await loadGroceryData();
     }
 
     async function moveToShopping(item) {
-        await removeFromPantry(item);
-        await addToShopping(item);
+        const name = getItemName(item);
+        if (!name) return;
+        try {
+            await fetch(`/api/grocery/${encodeURIComponent(userId)}/move`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, from: 'pantry', to: 'shopping' })
+            });
+        } catch (e) {
+            await removeFromPantry(name);
+            await addToShopping(name);
+        }
+        await loadGroceryData();
     }
 
     function toggleItemBought(checkbox, item) {
@@ -386,14 +446,11 @@
         }
     });
 
-    function escapeHtml(text) {
-        return (text || '').replace(/[&<>"']/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-        });
-    }
-
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {
+        updateShoppingList(initialShopping);
+        updatePantryList(initialPantry);
+        updateStats(initialShopping, initialPantry);
         loadGroceryData();
         loadProducts();
     });

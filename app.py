@@ -675,7 +675,15 @@ class GroceryService:
         Returns summary dictionary of deducted items and added items.
         """
         extracted = set()
-        if isinstance(meal_plan, dict):
+        if isinstance(meal_plan, list):
+            for m in meal_plan:
+                if isinstance(m, dict) and "ingredients" in m:
+                    raw = m["ingredients"]
+                    raw_list = [i.strip() for i in raw.split(",")] if isinstance(raw, str) else raw
+                    for r in raw_list:
+                        c = cls.clean_name(r)
+                        if c: extracted.add(c)
+        elif isinstance(meal_plan, dict):
             for _, day_val in meal_plan.items():
                 meals = day_val.get("meals", day_val) if isinstance(day_val, dict) else day_val
                 if isinstance(meals, dict):
@@ -694,7 +702,7 @@ class GroceryService:
         pantry_names = {p.get("name", "").lower() for p in user_groc.get("pantry", []) if isinstance(p, dict)}
         shopping_names = {s.get("name", "").lower() for s in user_groc.get("shoppingList", []) if isinstance(s, dict)}
 
-        deducted, added = [], []
+        deducted, added, already_present = [], [], []
         for ing in extracted:
             ing_l = ing.lower()
             # If the user already has this ingredient in their pantry, don't buy it!
@@ -704,11 +712,14 @@ class GroceryService:
             elif ing_l not in shopping_names:
                 cls.add_shopping(user_id, ing, "Meal Plan Staples")
                 added.append(ing)
+            else:
+                already_present.append(ing)
 
         return {
             "total_extracted": len(extracted),
             "added_to_shopping_count": len(added),
             "deducted_from_pantry_count": len(deducted),
+            "already_present_count": len(already_present),
             "added_items": added,
             "deducted_items": deducted,
         }
@@ -821,6 +832,82 @@ FALLBACK_PRODUCTS = [
     {"_id": "p5", "name": "Roasted Peanuts", "category": "Nuts & Seeds", "price": 35, "originalPrice": 40, "rating": 4.5, "description": "Crunchy roasted peanuts, high in healthy fats and plant protein."},
     {"_id": "p6", "name": "Standard Oats", "category": "Breakfast", "price": 50, "originalPrice": 55, "rating": 4.4, "description": "100% whole grain oats, great for sustained morning energy."},
     {"_id": "p7", "name": "Fresh Eggs (6 pack)", "category": "Dairy & Eggs", "price": 45, "originalPrice": 50, "rating": 4.8, "description": "Farm fresh eggs, complete source of amino acids."},
+]
+
+# Fallback curated multi-cuisine meal plans for immediate display
+DEFAULT_CURATED_MEALS = [
+    {
+        "_id": "m1",
+        "Shrt_Desc": "Moong Dal Tadka with Steamed Basmati Rice",
+        "Energ_Kcal": 380,
+        "Protein_(g)": 18,
+        "Carbohydrt_(g)": 58,
+        "Lipid_Tot_(g)": 8,
+        "cuisine": "Indian",
+        "category": "High-Fiber Lunch",
+        "ingredients": ["Yellow Moong Dal", "Turmeric", "Cumin Seeds", "Garlic", "Ghee", "Steamed Basmati Rice"],
+        "instructions": ["Rinse moong dal and pressure cook with turmeric and salt for 3 whistles.", "Heat ghee in a pan, temper cumin seeds, minced garlic, and green chilies.", "Pour tempering into cooked dal and simmer for 5 minutes. Serve hot with steamed rice."]
+    },
+    {
+        "_id": "m2",
+        "Shrt_Desc": "Tofu & Broccoli Veggie Stir-Fry",
+        "Energ_Kcal": 360,
+        "Protein_(g)": 22,
+        "Carbohydrt_(g)": 38,
+        "Lipid_Tot_(g)": 12,
+        "cuisine": "Asian",
+        "category": "Plant-Protein Dinner",
+        "ingredients": ["Firm Tofu", "Broccoli Florets", "Soy Sauce", "Sesame Oil", "Garlic", "Ginger", "Brown Rice"],
+        "instructions": ["Press and cube firm tofu, pan-sear in sesame oil until golden brown.", "Add broccoli florets, minced ginger, and garlic; toss on high heat for 3-4 minutes.", "Stir in low-sodium soy sauce and serve over cooked brown rice."]
+    },
+    {
+        "_id": "m3",
+        "Shrt_Desc": "Mediterranean Chickpea & Olive Quinoa Salad",
+        "Energ_Kcal": 410,
+        "Protein_(g)": 16,
+        "Carbohydrt_(g)": 56,
+        "Lipid_Tot_(g)": 14,
+        "cuisine": "Mediterranean",
+        "category": "Antioxidant Rich Lunch",
+        "ingredients": ["Cooked Quinoa", "Boiled Chickpeas", "Cucumber", "Cherry Tomatoes", "Kalamata Olives", "Feta Cheese", "Extra Virgin Olive Oil", "Lemon Juice"],
+        "instructions": ["Cook quinoa and allow to cool to room temperature.", "Toss with chickpeas, diced cucumbers, halved tomatoes, and olives.", "Whisk olive oil and lemon juice, pour dressing over salad and top with crumbled feta."]
+    },
+    {
+        "_id": "m4",
+        "Shrt_Desc": "Mexican Black Bean & Roasted Corn Bowl",
+        "Energ_Kcal": 420,
+        "Protein_(g)": 19,
+        "Carbohydrt_(g)": 64,
+        "Lipid_Tot_(g)": 10,
+        "cuisine": "Mexican",
+        "category": "Energizing Lunch",
+        "ingredients": ["Black Beans", "Sweet Corn", "Brown Rice", "Avocado", "Salsa", "Cumin", "Lime"],
+        "instructions": ["Warm black beans with cumin, lime juice, and a pinch of salt.", "Char sweet corn kernels lightly in a dry skillet.", "Assemble warm brown rice in a bowl, top with seasoned black beans, corn, avocado slices, and fresh salsa."]
+    },
+    {
+        "_id": "m5",
+        "Shrt_Desc": "Herbed Grilled Chicken Breast with Sweet Potato",
+        "Energ_Kcal": 460,
+        "Protein_(g)": 44,
+        "Carbohydrt_(g)": 36,
+        "Lipid_Tot_(g)": 12,
+        "cuisine": "Continental",
+        "category": "Lean Muscle Dinner",
+        "ingredients": ["Skinless Chicken Breast", "Sweet Potato", "Rosemary", "Garlic", "Olive Oil", "Steamed Asparagus"],
+        "instructions": ["Marinate chicken breast in olive oil, minced garlic, fresh rosemary, and black pepper.", "Grill chicken for 6-7 minutes each side until cooked through.", "Serve with oven-baked sweet potato wedges and steamed asparagus."]
+    },
+    {
+        "_id": "m6",
+        "Shrt_Desc": "Overnight Power Oats with Chia & Berries",
+        "Energ_Kcal": 340,
+        "Protein_(g)": 14,
+        "Carbohydrt_(g)": 52,
+        "Lipid_Tot_(g)": 8,
+        "cuisine": "Continental",
+        "category": "Nutritious Breakfast",
+        "ingredients": ["Rolled Oats", "Almond Milk", "Chia Seeds", "Honey", "Blueberries", "Walnuts"],
+        "instructions": ["Combine rolled oats, almond milk, and chia seeds in a mason jar.", "Refrigerate overnight (minimum 6 hours) to thicken.", "Top with raw honey, fresh blueberries, and crushed walnuts before enjoying."]
+    }
 ]
 
 
@@ -1035,8 +1122,17 @@ def diet_plan():
     """
     uid = get_current_user_id()
     state = get_or_create_user_state(uid)
-    recipes = list(db_manager.recipes.find().limit(25))
-    return render_template("diet_plan.html", user=uid, user_doc=state["user_doc"], meal_plan=state["meals"].get("plan", {}), recipes=objid_to_str(recipes))
+    db_recipes = list(db_manager.recipes.find().limit(25))
+    all_meals = objid_to_str(db_recipes) if db_recipes else DEFAULT_CURATED_MEALS
+
+    return render_template(
+        "diet_plan.html",
+        user=uid,
+        user_doc=state["user_doc"],
+        plan=all_meals,
+        meal_plan=all_meals,
+        recipes=all_meals
+    )
 
 
 @app.route("/mealplanner")
@@ -1084,6 +1180,7 @@ def plank_timer():
 
 
 @app.route("/repetition_counter")
+@login_required
 def repetition_counter():
     """Interactive workout repetition counter challenge."""
     return render_template("repetition_counter.html")
@@ -1098,11 +1195,24 @@ def achievements():
 
 
 @app.route("/yoga_pose_quiz")
+@login_required
+def yoga_pose_quiz():
+    """Interactive Yoga posture quiz."""
+    return render_template("yoga_pose_quiz_fixed.html")
+
+
 @app.route("/nutrition_label_quiz")
 @login_required
+def nutrition_label_quiz():
+    """Interactive Nutrition label reading quiz."""
+    return render_template("nutrition_label_quiz.html")
+
+
+@app.route("/quizzes")
+@login_required
 def quizzes():
-    """Educational wellness quiz interface."""
-    return render_template("yoga_pose_quiz_fixed.html")
+    """General quiz alias."""
+    return redirect(url_for("yoga_pose_quiz"))
 
 
 @app.route("/product/<product_id>")
@@ -1194,15 +1304,72 @@ def api_push_to_grocery():
     and pushes only missing items to the shopping checklist.
     """
     uid = get_current_user_id()
-    meals_doc = db_manager.meal_planner.find_one({"userId": uid}) or {}
-    plan = meals_doc.get("plan", {})
+    data = request.get_json(silent=True) or {}
+    plan = data.get("meals") or data.get("plan")
     if not plan:
-        # Fallback starter plan if none exists
-        plan = {
-            "Monday": {"meals": {"dinner": [{"name": "Lentil Soup", "ingredients": "Moong Dal, Turmeric, Cumin, Spinach"}]}}
-        }
+        meals_doc = db_manager.meal_planner.find_one({"userId": uid}) or {}
+        plan = meals_doc.get("plan", {})
+    if not plan:
+        db_recipes = list(db_manager.recipes.find().limit(25))
+        plan = objid_to_str(db_recipes) if db_recipes else DEFAULT_CURATED_MEALS
+
     result = GroceryService.consolidate_diet_to_grocery(uid, plan)
-    return jsonify({"success": True, "details": result})
+    added_count = result.get("added_to_shopping_count", 0)
+    deducted_count = result.get("deducted_from_pantry_count", 0)
+    already_count = result.get("already_present_count", 0)
+    
+    if added_count > 0:
+        msg = f"Successfully added {added_count} items to your shopping list! ({deducted_count} pantry items excluded to prevent waste)"
+    elif already_count > 0:
+        msg = f"All {already_count} ingredients are already in your shopping list or stocked in your pantry!"
+    else:
+        msg = "Grocery shopping list is already up to date!"
+
+    return jsonify({
+        "success": True,
+        "count": added_count,
+        "deducted": deducted_count,
+        "already_present": already_count,
+        "message": msg,
+        "details": result
+    })
+
+
+@app.route("/api/diet_plan/<user_id>/add_custom_recipe", methods=["POST"])
+@login_required
+@require_ownership("user_id")
+def api_add_custom_recipe(user_id):
+    """
+    Saves a user-submitted custom recipe to MongoDB.
+    """
+    data = request.get_json() or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "Recipe name is required."}), 400
+
+    uid = unquote(user_id)
+    recipe_doc = {
+        "userId": uid,
+        "Shrt_Desc": name,
+        "Energ_Kcal": float(data.get("calories", 350)),
+        "Protein_(g)": float(data.get("protein", 15)),
+        "Carbohydrt_(g)": float(data.get("carbs", 40)),
+        "Lipid_Tot_(g)": float(data.get("fats", 10)),
+        "ingredients": data.get("ingredients", []),
+        "instructions": data.get("instructions", []),
+        "cuisine": data.get("cuisine", "Custom"),
+        "category": "Custom Recipe",
+        "createdAt": dt.datetime.now(dt.timezone.utc).isoformat()
+    }
+    db_manager.recipes.insert_one(recipe_doc)
+
+    db_manager.activity_log.update_one(
+        {"userId": uid},
+        {"$push": {"activities": {"activity": f"Added custom recipe: {name}", "timestamp": dt.datetime.now(dt.timezone.utc)}}},
+        upsert=True
+    )
+    return jsonify({"success": True, "message": "Custom recipe added successfully!"})
+
 
 
 @app.route("/api/grocery/products", methods=["GET"])

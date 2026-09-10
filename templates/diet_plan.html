@@ -241,7 +241,8 @@
         try {
             const response = await fetch('/api/diet_plan/push_to_grocery', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan: planData })
             });
             const data = await response.json();
             if (data.success) {
@@ -367,7 +368,7 @@
         };
 
         try {
-            const res = await fetch('/api/diet_plan/{{ session.get("username", "anonymous") }}/add_custom_recipe', {
+            const res = await fetch('/api/diet_plan/{{ user }}/add_custom_recipe', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(recipeData)
