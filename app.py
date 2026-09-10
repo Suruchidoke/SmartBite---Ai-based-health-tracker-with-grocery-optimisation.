@@ -677,12 +677,13 @@ class GroceryService:
         extracted = set()
         if isinstance(meal_plan, list):
             for m in meal_plan:
-                if isinstance(m, dict) and "ingredients" in m:
-                    raw = m["ingredients"]
-                    raw_list = [i.strip() for i in raw.split(",")] if isinstance(raw, str) else raw
-                    for r in raw_list:
-                        c = cls.clean_name(r)
-                        if c: extracted.add(c)
+                if isinstance(m, dict):
+                    raw = m.get("ingredients") or m.get("RecipeIngredientParts") or m.get("RecipeIngredientQuantities")
+                    if raw:
+                        raw_list = [i.strip() for i in raw.split(",")] if isinstance(raw, str) else raw
+                        for r in raw_list:
+                            c = cls.clean_name(r)
+                            if c: extracted.add(c)
         elif isinstance(meal_plan, dict):
             for _, day_val in meal_plan.items():
                 meals = day_val.get("meals", day_val) if isinstance(day_val, dict) else day_val
@@ -690,12 +691,13 @@ class GroceryService:
                     for _, items in meals.items():
                         if isinstance(items, list):
                             for m in items:
-                                if isinstance(m, dict) and "ingredients" in m:
-                                    raw = m["ingredients"]
-                                    raw_list = [i.strip() for i in raw.split(",")] if isinstance(raw, str) else raw
-                                    for r in raw_list:
-                                        c = cls.clean_name(r)
-                                        if c: extracted.add(c)
+                                if isinstance(m, dict):
+                                    raw = m.get("ingredients") or m.get("RecipeIngredientParts") or m.get("RecipeIngredientQuantities")
+                                    if raw:
+                                        raw_list = [i.strip() for i in raw.split(",")] if isinstance(raw, str) else raw
+                                        for r in raw_list:
+                                            c = cls.clean_name(r)
+                                            if c: extracted.add(c)
 
         # Retrieve current user's pantry and shopping lists
         user_groc = get_or_create_user_state(user_id)["grocery"]
@@ -1123,7 +1125,27 @@ def diet_plan():
     uid = get_current_user_id()
     state = get_or_create_user_state(uid)
     db_recipes = list(db_manager.recipes.find().limit(25))
-    all_meals = objid_to_str(db_recipes) if db_recipes else DEFAULT_CURATED_MEALS
+    if db_recipes:
+        all_meals = []
+        for r in objid_to_str(db_recipes):
+            if not r.get("ingredients"):
+                parts = r.get("RecipeIngredientParts") or r.get("RecipeIngredientQuantities") or ""
+                r["ingredients"] = [p.strip().title() for p in parts.split(",") if p.strip()]
+            if not r.get("Shrt_Desc"):
+                r["Shrt_Desc"] = r.get("Name", "Curated Meal")
+            if not r.get("Energ_Kcal"):
+                r["Energ_Kcal"] = int(r.get("Calories", 400))
+            if not r.get("Protein_(g)"):
+                r["Protein_(g)"] = round(float(r.get("ProteinContent", 18)), 1)
+            if not r.get("Carbohydrt_(g)"):
+                r["Carbohydrt_(g)"] = round(float(r.get("CarbohydrateContent", 45)), 1)
+            if not r.get("Lipid_Tot_(g)"):
+                r["Lipid_Tot_(g)"] = round(float(r.get("FatContent", 12)), 1)
+            if not r.get("cuisine"):
+                r["cuisine"] = (r.get("Keywords") or "Continental").split(",")[0].strip()
+            all_meals.append(r)
+    else:
+        all_meals = DEFAULT_CURATED_MEALS
 
     return render_template(
         "diet_plan.html",
