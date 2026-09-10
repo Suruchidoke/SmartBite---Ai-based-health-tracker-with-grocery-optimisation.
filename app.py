@@ -824,6 +824,93 @@ class AIService:
             f"Your daily target is **{cals} kcal** ({goal}). Ask me for recipes using your pantry ({p_str}) or nutrition tips!"
         )
 
+    @classmethod
+    def generate_structured_recipes(cls, pantry: list, target_cals: int, goal: str, skill: str = "Beginner", count: int = 3) -> list:
+        """
+        Generates structured recipe suggestions for the dashboard recipe generator card.
+        Prioritizes user's pantry items. Returns a list of dicts with:
+        name, cook_time, description, ingredients, calories.
+        """
+        pantry_str = ", ".join(pantry) if pantry else "None"
+        api_key = app.config.get("GEMINI_API_KEY")
+
+        if HAS_GENAI and api_key:
+            try:
+                client = genai.Client(api_key=api_key)
+                prompt = (
+                    f"You are an expert chef and clinical nutritionist. Generate exactly {count} creative, healthy recipe ideas.\n"
+                    f"User Skill: {skill}\n"
+                    f"Calorie Target: ~{target_cals} kcal/day ({goal})\n"
+                    f"Available Pantry Ingredients: {pantry_str}\n\n"
+                    f"Respond ONLY with valid JSON in this exact structure without markdown backticks:\n"
+                    f'{{"recipes": [{{"name": "Recipe Title", "cook_time": 20, "description": "Short 1-2 sentence description", "calories": 380, "ingredients": ["Item 1", "Item 2"]}}]}}'
+                )
+                candidates = [
+                    app.config.get("GEMINI_MODEL", "gemini-3.6-flash"),
+                    "gemini-3.6-flash",
+                    "gemini-3.5-flash",
+                    "gemini-flash-latest"
+                ]
+                for model_name in candidates:
+                    try:
+                        res = client.models.generate_content(model=model_name, contents=prompt)
+                        if res and res.text:
+                            raw = res.text.strip()
+                            if raw.startswith("```json"): raw = raw[7:]
+                            if raw.startswith("```"): raw = raw[3:]
+                            if raw.endswith("```"): raw = raw[:-3]
+                            data = json.loads(raw.strip())
+                            if "recipes" in data and isinstance(data["recipes"], list):
+                                return data["recipes"][:count]
+                    except Exception:
+                        continue
+            except Exception as e:
+                logger.warning(f"Structured recipe generation notice: {e}")
+
+        # Intelligent Fallback Synthesizer
+        curated_pool = [
+            {
+                "name": "Pan-Seared Garden Veggie Stir-Fry",
+                "cook_time": 15 if skill == "Beginner" else 20,
+                "description": "Quick high-fiber stir fry utilizing your fresh pantry items and aromatic garlic.",
+                "calories": 340,
+                "ingredients": ["Mixed Vegetables", "Garlic", "Soy Sauce", "Sesame Oil"]
+            },
+            {
+                "name": "Golden Protein Lentil Soup",
+                "cook_time": 20 if skill == "Beginner" else 25,
+                "description": "Nutrient-dense comforting soup rich in plant protein and metabolism-boosting turmeric.",
+                "calories": 380,
+                "ingredients": ["Yellow Lentils", "Turmeric", "Cumin", "Spinach"]
+            },
+            {
+                "name": "Mediterranean Quinoa Superbowl",
+                "cook_time": 20,
+                "description": "Balanced complex carb bowl topped with fresh cucumber, olive oil, and herbs.",
+                "calories": 410,
+                "ingredients": ["Quinoa", "Cucumber", "Olive Oil", "Lemon Juice"]
+            },
+            {
+                "name": "Herbed Chickpea & Avocado Salad",
+                "cook_time": 15,
+                "description": "Crisp refreshing salad with high good fats and sustained satiety.",
+                "calories": 360,
+                "ingredients": ["Boiled Chickpeas", "Avocado", "Lemon", "Black Pepper"]
+            },
+            {
+                "name": "Savory Whole-Wheat Wrap",
+                "cook_time": 25,
+                "description": "Warm toasted wrap packed with seasoned pantry greens and spiced legumes.",
+                "calories": 390,
+                "ingredients": ["Whole Wheat Atta", "Tomatoes", "Onions", "Spices"]
+            }
+        ]
+        if pantry:
+            curated_pool[0]["name"] = f"Pantry Special: {pantry[0].capitalize()} Medley"
+            curated_pool[0]["description"] = f"Crafted to make the most of your {pantry_str} with zero waste."
+        return curated_pool[:count]
+
+
 
 # Fallback product catalog for initial exploration if database collections are empty
 FALLBACK_PRODUCTS = [
@@ -1455,8 +1542,88 @@ def api_remove_shopping(user_id):
 def api_move_grocery(user_id):
     """Moves an item between shopping list and pantry (e.g. after purchasing)."""
     data = request.get_json() or {}
-    g = GroceryService.move_item(unquote(user_id), data.get("name"), data.get("from", "shopping"), data.get("to", "pantry"))
+    item_name = data.get("name") or data.get("item")
+    g = GroceryService.move_item(unquote(user_id), item_name, data.get("from", "shopping"), data.get("to", "pantry"))
     return jsonify({"success": True, "groceryData": objid_to_str(g)})
+
+
+@app.route("/api/grocery/product/<product_id>", methods=["GET"])
+def api_product_detail_json(product_id):
+    """Returns detailed nutritional facts and pricing for a single grocery catalog product."""
+    p = next((x for x in FALLBACK_PRODUCTS if x["_id"] == product_id or x["name"].lower() == product_id.lower()), FALLBACK_PRODUCTS[0])
+    prod = dict(p)
+    prod["nutrition"] = prod.get("nutrition", {
+        "calories": 120,
+        "protein": 6,
+        "carbohydrates": 20,
+        "fat": 2,
+        "fiber": 4,
+        "sugar": 1
+    })
+    prod["nutritional_benefits"] = prod.get("nutritional_benefits", [
+        "Rich in essential vitamins and minerals",
+        "Supports cardiovascular health and sustained satiety",
+        "Low glycemic index for steady daily energy"
+    ])
+    return jsonify(prod)
+
+
+@app.route("/api/recipes/generate/<user_id>", methods=["POST"])
+@login_required
+@require_ownership("user_id")
+def api_generate_recipes(user_id):
+    """
+    AI Recipe Generator endpoint for dashboard.
+    Accepts: { skill_level: "Beginner", num_recipes: 3 }
+    Uses pantry inventory, calorie targets, and skill level to return structured recipe ideas.
+    """
+    uid = unquote(user_id)
+    state = get_or_create_user_state(uid)
+    data = request.get_json(silent=True) or {}
+    skill = data.get("skill_level", "Beginner")
+    count = int(data.get("num_recipes", 3))
+
+    pantry = [p.get("name") for p in state["grocery"].get("pantry", []) if isinstance(p, dict) and p.get("name")]
+    target_cals = state["health"].get("targetCalories") or 2000
+    goal = state["user_doc"].get("goal", "healthy maintenance")
+
+    recipes = AIService.generate_structured_recipes(pantry, target_cals, goal, skill, count)
+    return jsonify({"success": True, "recipes": recipes})
+
+
+@app.route("/api/activity/<user_id>/add", methods=["POST"])
+@login_required
+@require_ownership("user_id")
+def api_add_activity(user_id):
+    """Logs a custom workout or daily physical activity."""
+    uid = unquote(user_id)
+    data = request.get_json() or {}
+    act = (data.get("activity") or "").strip()
+    if not act:
+        return jsonify({"error": "Activity description is required."}), 400
+
+    db_manager.activity_log.update_one(
+        {"userId": uid},
+        {"$push": {"activities": {"activity": act, "timestamp": dt.datetime.now(dt.timezone.utc)}}},
+        upsert=True
+    )
+    return jsonify({"success": True, "message": f"Logged activity: {act}"})
+
+
+@app.route("/api/health/<user_id>/reset_calories", methods=["POST"])
+@login_required
+@require_ownership("user_id")
+def api_reset_calories(user_id):
+    """Resets daily logged calories back to zero for the new day."""
+    uid = unquote(user_id)
+    db_manager.health_data.update_one({"userId": uid}, {"$set": {"calories": 0}}, upsert=True)
+    db_manager.activity_log.update_one(
+        {"userId": uid},
+        {"$push": {"activities": {"activity": "Reset daily calories counter", "timestamp": dt.datetime.now(dt.timezone.utc)}}},
+        upsert=True
+    )
+    return jsonify({"success": True, "calories": 0})
+
 
 
 @app.route("/api/ai/chat", methods=["POST"])
