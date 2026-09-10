@@ -180,22 +180,22 @@
 
         async function fetchAchievements() {
             try {
-                const response = await fetch(`/api/achievements/{{ user }}`);
+                const response = await fetch('/api/achievements/' + encodeURIComponent('{{ user }}'));
                 if (!response.ok) {
                     throw new Error("Failed to fetch achievements data");
                 }
                 const data = await response.json();
 
-                document.getElementById("rank").textContent = data.rank;
-                document.getElementById("score").textContent = data.score;
-                document.getElementById("next-level").textContent = data.next_level;
+                document.getElementById("rank").textContent = data.rank || 'Beginner';
+                document.getElementById("score").textContent = data.score != null ? data.score : 0;
+                document.getElementById("next-level").textContent = data.next_level || 'Novice';
 
                 const progressBarFill = document.getElementById("progress-bar-fill");
-                progressBarFill.style.width = data.progress + "%";
+                progressBarFill.style.width = (data.progress || 0) + "%";
 
                 const levelsList = document.getElementById("levels-list");
                 levelsList.innerHTML = "";
-                data.levels.forEach(level => {
+                (data.levels || []).forEach(level => {
                     const li = document.createElement("li");
                     li.className = "level" + (level.unlocked ? " unlocked" : "");
                     li.innerHTML = `

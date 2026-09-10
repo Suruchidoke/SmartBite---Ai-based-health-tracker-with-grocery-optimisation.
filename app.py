@@ -1490,16 +1490,44 @@ def api_save_score():
 @app.route("/api/achievements/<user_id>", methods=["GET"])
 def api_achievements(user_id):
     """
-    Calculates dynamic user level and rank progression based on accumulated workout points:
-    - Beginner: 0 - 99 pts
-    - Novice: 100 - 299 pts
-    - Intermediate: 300 - 599 pts
-    - Advanced: 600 - 999 pts
-    - Master: 1000+ pts
+    Calculates dynamic user level, milestone badges, and rank progression based on workout points.
     """
     tot = (db_manager.activity_log.find_one({"userId": unquote(user_id)}) or {}).get("total_score", 0)
-    rank = "Master" if tot >= 1000 else "Advanced" if tot >= 600 else "Intermediate" if tot >= 300 else "Novice" if tot >= 100 else "Beginner"
-    return jsonify({"rank": rank, "score": tot, "next_level": "Master"})
+    levels = [
+        {"name": "Bronze Starter", "description": "Earn your first 50 fitness challenge points", "threshold": 50, "unlocked": tot >= 50},
+        {"name": "Silver Striker", "description": "Reach 200 points with active workout logging", "threshold": 200, "unlocked": tot >= 200},
+        {"name": "Gold Athlete", "description": "Hit 500 challenge points and log healthy meals", "threshold": 500, "unlocked": tot >= 500},
+        {"name": "Platinum Champion", "description": "Surpass 1,000 points across workouts & quizzes", "threshold": 1000, "unlocked": tot >= 1000},
+    ]
+    if tot >= 1000:
+        rank = "Master"
+        next_lvl = "Max Rank Reached"
+        prog = 100
+    elif tot >= 600:
+        rank = "Advanced"
+        next_lvl = "Master (1,000 pts)"
+        prog = int(((tot - 600) / 400) * 100)
+    elif tot >= 300:
+        rank = "Intermediate"
+        next_lvl = "Advanced (600 pts)"
+        prog = int(((tot - 300) / 300) * 100)
+    elif tot >= 100:
+        rank = "Novice"
+        next_lvl = "Intermediate (300 pts)"
+        prog = int(((tot - 100) / 200) * 100)
+    else:
+        rank = "Beginner"
+        next_lvl = "Novice (100 pts)"
+        prog = int((tot / 100) * 100)
+
+    prog = max(0, min(100, prog))
+    return jsonify({
+        "rank": rank,
+        "score": tot,
+        "next_level": next_lvl,
+        "progress": prog,
+        "levels": levels
+    })
 
 
 # ==============================================================================
